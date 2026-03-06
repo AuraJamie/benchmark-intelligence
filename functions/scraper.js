@@ -58,99 +58,124 @@ export async function runScraper() {
         // wait for the results page to be loaded
         await page.waitForNavigation({ waitUntil: 'networkidle2' });
 
-        const html = await page.content();
-        const $ = cheerio.load(html);
-        const searchResults = $('#searchresults .searchresult');
+        let hasNextPage = false;
+        let pageNum = 1;
+        const extensionApps = [];
 
-        console.log(`Found ${searchResults.length} total decided applications. Filtering for extensions...`);
+        do {
+            console.log(`Scraping search results page ${pageNum}...`);
+            const html = await page.content();
+            const $ = cheerio.load(html);
+            const searchResults = $('#searchresults .searchresult');
 
-        // Iterate through search results
-        for (const el of searchResults) {
-            const item = $(el);
-            const description = item.find('a').text().trim() || "";
+            console.log(`Found ${searchResults.length} decided applications on page ${pageNum}. Filtering for extensions...`);
 
-            // Target specifically "extension" applications
-            if (description.toLowerCase().includes('extension')) {
-                const relativeUrl = item.find('a').attr('href');
-                const url = BASE_URL + relativeUrl;
+            // Extract extensions from this page
+            for (const el of searchResults) {
+                const item = $(el);
+                const description = item.find('a').text().trim() || "";
 
-                // Extract url parameter 'keyVal' which uniquely identifies applications
-                const urlParams = new URLSearchParams(relativeUrl.split('?')[1]);
-                const keyVal = urlParams.get('keyVal');
+                if (description.toLowerCase().includes('extension')) {
+                    const relativeUrl = item.find('a').attr('href');
+                    const url = new URL(relativeUrl, BASE_URL).href;
 
-                if (!keyVal) continue;
+                    const urlParams = new URLSearchParams(relativeUrl.split('?')[1]);
+                    const keyVal = urlParams.get('keyVal');
 
-                const addressText = item.find('.address').text().trim() || "";
+                    if (!keyVal) continue;
 
-                // Check if it already exists in DB
-                const docRef = db.collection('projects').doc(keyVal);
-                const existingDoc = await docRef.get();
-
-                if (existingDoc.exists) {
-                    stats.skipped++;
-                    continue;
+                    const addressText = item.find('.address').text().trim() || "";
+                    extensionApps.push({ keyVal, url, description, addressText });
                 }
+            }
 
-                // We found a new extension. Let's dig deeper into the application details page.
+            // Check for a 'Next' page link in the pagination
+            const nextLink = $('a.next').attr('href');
+            if (nextLink) {
+                hasNextPage = true;
+                pageNum++;
+                const absoluteNextUrl = new URL(nextLink, BASE_URL).href;
+                console.log(`Navigating to next page: ${absoluteNextUrl}`);
+                await page.goto(absoluteNextUrl, { waitUntil: 'networkidle2' });
+            } else {
+                hasNextPage = false;
+            }
+        } while (hasNextPage);
+
+        console.log(`Extracted a total of ${extensionApps.length} extension applications from all pages.`);
+
+        // Now iterate through the collected extensions
+        for (const app of extensionApps) {
+            const { keyVal, url, description, addressText } = app;
+
+            // Check if it already exists in DB
+            const docRef = db.collection('projects').doc(keyVal);
+            const existingDoc = await docRef.get();
+
+            if (existingDoc.exists) {
+                stats.skipped++;
+                continue;
+            }
+
+            // We found a new extension. Let's dig deeper into the application details page.
+            try {
+                console.log(`Fetching details for ${keyVal}...`);
+
+                // Navigate the puppeteer page to the detail URL
+                await page.goto(url, { waitUntil: 'networkidle2' });
+                const detailHtml = await page.content();
+                const $detail = cheerio.load(detailHtml);
+
+                // Note: Actual fields depending on York's markup structure.
+                const fullDescription = $detail('th:contains("Proposal")').next('td').text().trim() || description;
+                const applicantName = $detail('th:contains("Applicant")').next('td').text().trim() || "Unknown";
+
+                const projectData = {
+                    id: keyVal,
+                    address: addressText,
+                    description: fullDescription,
+                    status: 'New',
+                    applicantName: applicantName,
+                    dateDecided: new Date().toISOString(),
+                    url: url,
+                    notes: '',
+                    collectionId: null,
+                    timestamp: new Date(),
+                    coordinates: null // Placeholder
+                };
+
+                // Geocoding via Nominatim (OpenStreetMap)
                 try {
-                    console.log(`Fetching details for ${keyVal}...`);
+                    console.log(`Geocoding address: ${addressText}...`);
+                    const encodedAddress = encodeURIComponent(`${addressText}, York, UK`);
+                    // Nominatim usage policy requires an identifying User-Agent
+                    const geoResponse = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`, {
+                        headers: { 'User-Agent': 'BenchmarkIntelligence/1.0 (jamie.dark.business@gmail.com)' }
+                    });
 
-                    // Navigate the puppeteer page to the detail URL
-                    await page.goto(url, { waitUntil: 'networkidle2' });
-                    const detailHtml = await page.content();
-                    const $detail = cheerio.load(detailHtml);
-
-                    // Note: Actual fields depending on York's markup structure.
-                    const fullDescription = $detail('th:contains("Proposal")').next('td').text().trim() || description;
-                    const applicantName = $detail('th:contains("Applicant")').next('td').text().trim() || "Unknown";
-
-                    const projectData = {
-                        id: keyVal,
-                        address: addressText,
-                        description: fullDescription,
-                        status: 'New',
-                        applicantName: applicantName,
-                        dateDecided: new Date().toISOString(),
-                        url: url,
-                        notes: '',
-                        collectionId: null,
-                        timestamp: new Date(),
-                        coordinates: null // Placeholder
-                    };
-
-                    // Geocoding via Nominatim (OpenStreetMap)
-                    try {
-                        console.log(`Geocoding address: ${addressText}...`);
-                        const encodedAddress = encodeURIComponent(`${addressText}, York, UK`);
-                        // Nominatim usage policy requires an identifying User-Agent
-                        const geoResponse = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`, {
-                            headers: { 'User-Agent': 'BenchmarkIntelligence/1.0 (jamie.dark.business@gmail.com)' }
-                        });
-
-                        if (geoResponse.data && geoResponse.data.length > 0) {
-                            const location = geoResponse.data[0];
-                            projectData.coordinates = {
-                                lat: parseFloat(location.lat),
-                                lng: parseFloat(location.lon)
-                            };
-                            console.log(`Found coordinates: ${location.lat}, ${location.lon}`);
-                        } else {
-                            console.log(`No coordinates found for: ${addressText}`);
-                        }
-                    } catch (geoErr) {
-                        console.error(`Geocoding failed for ${keyVal}:`, geoErr.message);
+                    if (geoResponse.data && geoResponse.data.length > 0) {
+                        const location = geoResponse.data[0];
+                        projectData.coordinates = {
+                            lat: parseFloat(location.lat),
+                            lng: parseFloat(location.lon)
+                        };
+                        console.log(`Found coordinates: ${location.lat}, ${location.lon}`);
+                    } else {
+                        console.log(`No coordinates found for: ${addressText}`);
                     }
-
-                    await docRef.set(projectData);
-                    stats.added++;
-
-                    // Wait briefly to avoid hitting the council servers too violently
-                    await new Promise(r => setTimeout(r, 750));
-
-                } catch (detailErr) {
-                    console.error(`Error scraping detail page for ${keyVal}:`, detailErr.message);
-                    stats.errors++;
+                } catch (geoErr) {
+                    console.error(`Geocoding failed for ${keyVal}:`, geoErr.message);
                 }
+
+                await docRef.set(projectData);
+                stats.added++;
+
+                // Wait briefly to avoid hitting the council servers too violently
+                await new Promise(r => setTimeout(r, 750));
+
+            } catch (detailErr) {
+                console.error(`Error scraping detail page for ${keyVal}:`, detailErr.message);
+                stats.errors++;
             }
         }
 
