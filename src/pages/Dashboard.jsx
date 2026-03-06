@@ -67,14 +67,16 @@ const Dashboard = () => {
     };
 
     const triggerSync = async () => {
-        const token = import.meta.env.VITE_GITHUB_TOKEN;
-        const owner = import.meta.env.VITE_GITHUB_OWNER;
-        const repo = import.meta.env.VITE_GITHUB_REPO;
+        let token = localStorage.getItem('github_sync_token');
 
-        if (!token || token === 'your_github_personal_access_token_here') {
-            alert('Please set your VITE_GITHUB_TOKEN in the .env file first. See README for instructions.');
-            return;
+        if (!token) {
+            token = prompt("Please enter your GitHub Personal Access Token (with 'workflow' scope) to trigger the sync manually.\n\nIt will be saved securely in your browser:");
+            if (!token) return;
+            localStorage.setItem('github_sync_token', token);
         }
+
+        const owner = 'AuraJamie';
+        const repo = 'benchmark-intelligence';
 
         setSyncing(true);
         setSyncStatus(null);
@@ -99,6 +101,11 @@ const Dashboard = () => {
             } else {
                 const err = await response.json();
                 console.error('GitHub Actions error:', err);
+                if (err.message === 'Bad credentials') {
+                    // Token is invalid, clear it so they are prompted next time
+                    localStorage.removeItem('github_sync_token');
+                    alert("Invalid GitHub Token. Please generate a new one at https://github.com/settings/tokens/new with the 'workflow' scope and try again.");
+                }
                 setSyncStatus('error');
                 setTimeout(() => setSyncStatus(null), 5000);
             }

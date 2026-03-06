@@ -1,6 +1,8 @@
 import { useSearchParams } from 'react-router-dom';
-import { useState } from 'react';
-import { Network, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Network, CheckCircle2, Loader2 } from 'lucide-react';
+import { db } from '../firebase';
+import { doc, getDoc, addDoc, collection, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 const Capture = () => {
     const [searchParams] = useSearchParams();
@@ -13,11 +15,62 @@ const Capture = () => {
         consentGiven: false,
     });
 
-    const handleSubmit = (e) => {
+    const [loadingProject, setLoadingProject] = useState(false);
+    const [projectData, setProjectData] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (projectId) {
+            const fetchProject = async () => {
+                setLoadingProject(true);
+                try {
+                    const docRef = doc(db, 'projects', projectId);
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
+                        setProjectData(docSnap.data());
+                    } else {
+                        setError("Project not found.");
+                    }
+                } catch (err) {
+                    console.error("Error fetching project:", err);
+                    setError("Failed to load project details.");
+                } finally {
+                    setLoadingProject(false);
+                }
+            };
+            fetchProject();
+        }
+    }, [projectId]);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (formData.consentGiven) {
-            setSubmitted(true);
-            // In Phase 4, we will submit to Firestore and update project status
+            setSubmitting(true);
+            setError(null);
+            try {
+                // Add to homeowners collection
+                await addDoc(collection(db, 'homeowners'), {
+                    ...formData,
+                    projectId: projectId || null,
+                    timestamp: serverTimestamp()
+                });
+
+                // Update project status if projectId exists
+                if (projectId) {
+                    const projectRef = doc(db, 'projects', projectId);
+                    await updateDoc(projectRef, {
+                        status: 'Contacted' // Update status
+                    });
+                }
+
+                setSubmitted(true);
+            } catch (err) {
+                console.error("Error submitting form:", err);
+                setError("Failed to submit details. Please try again.");
+            } finally {
+                setSubmitting(false);
+            }
         }
     };
 
@@ -53,13 +106,27 @@ const Capture = () => {
             <div className="w-full max-w-md rounded-xl border border-[#e2e8f0] bg-white p-8 shadow-sm">
                 <div className="mb-8">
                     <h1 className="text-2xl font-semibold tracking-tight">Request Builder Quotes</h1>
-                    {projectId && (
-                        <p className="mt-2 text-sm text-gray-600 bg-gray-50 border border-gray-100 p-3 rounded-lg">
+
+                    {loadingProject && (
+                        <div className="mt-4 flex items-center justify-center text-sm text-gray-500 gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" /> Loading project details...
+                        </div>
+                    )}
+
+                    {error && !submitted && (
+                        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                            {error}
+                        </div>
+                    )}
+
+                    {projectId && projectData && (
+                        <p className="mt-4 text-sm text-gray-600 bg-gray-50 border border-gray-100 p-3 rounded-lg">
                             Regarding your approved extension at: <br />
-                            <span className="font-semibold text-gray-900 mt-1 block">123 Fake Street, York</span>
+                            <span className="font-semibold text-gray-900 mt-1 block">{projectData.address}</span>
                         </p>
                     )}
-                    {!projectId && (
+
+                    {!projectId && !loadingProject && (
                         <p className="mt-2 text-sm text-gray-500">
                             Please enter your details to receive quotes from our curated network of contractors.
                         </p>
@@ -129,9 +196,11 @@ const Capture = () => {
 
                     <button
                         type="submit"
-                        className="w-full rounded-lg bg-[#0f172a] px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-black focus:outline-none focus:ring-2 focus:ring-[#0f172a] focus:ring-offset-2 mt-2"
+                        disabled={submitting}
+                        className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#0f172a] px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-black focus:outline-none focus:ring-2 focus:ring-[#0f172a] focus:ring-offset-2 mt-2 disabled:opacity-70"
                     >
-                        Submit Details
+                        {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                        {submitting ? 'Submitting...' : 'Submit Details'}
                     </button>
                 </form>
             </div>
