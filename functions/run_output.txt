@@ -1,0 +1,134 @@
+[dotenv@17.3.1] injecting env (1) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+Initializing Firebase with Default Credentials...
+Starting GitHub Actions Scraper Context...
+Starting scraper...
+Establishing session via https://planningaccess.york.gov.uk/online-applications/search.do?action=weeklyList
+Submitting weekly list search...
+Could not find form specifically by name, trying generic forms...
+Found 10 total decided applications. Filtering for extensions...
+Scraper failed: Error: 7 PERMISSION_DENIED: Cloud Firestore API has not been used in project benchmark-intelligence-a5b7c before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=benchmark-intelligence-a5b7c then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.
+    at callErrorFromStatus (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@grpc\grpc-js\build\src\call.js:32:19)
+    at Object.onReceiveStatus (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@grpc\grpc-js\build\src\client.js:359:73)
+    at Object.onReceiveStatus (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@grpc\grpc-js\build\src\client-interceptors.js:327:181)
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@grpc\grpc-js\build\src\resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@grpc\grpc-js\build\src\client.js:342:32)
+    at ServiceClientImpl.<anonymous> (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@grpc\grpc-js\build\src\make-client.js:105:19)
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\@google-cloud\firestore\build\src\v1\firestore_client.js:242:33
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:38:28
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\google-gax\build\src\normalCalls\timeout.js:44:16
+    at Object.request (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\google-gax\build\src\streamingCalls\streaming.js:234:40)
+    at makeRequest (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\retry-request\index.js:159:28)
+    at retryRequest (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\retry-request\index.js:119:5)
+    at StreamProxy.setStream (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\google-gax\build\src\streamingCalls\streaming.js:225:37)
+    at StreamingApiCaller.call (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:54:16)
+Caused by: Error
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\@google-cloud\firestore\build\src\index.js:1040:27
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30
+    at NoopContextManager.with (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@opentelemetry\api\build\src\context\NoopContextManager.js:25:19)
+    at ContextAPI.with (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@opentelemetry\api\build\src\api\context.js:60:46)
+    at NoopTracer.startActiveSpan (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@opentelemetry\api\build\src\trace\NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@opentelemetry\api\build\src\trace\ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:102:28)
+    at Firestore.getAll (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\@google-cloud\firestore\build\src\index.js:1031:32)
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\@google-cloud\firestore\build\src\reference\document-reference.js:182:36
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30 {
+  code: 7,
+  details: 'Cloud Firestore API has not been used in project benchmark-intelligence-a5b7c before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=benchmark-intelligence-a5b7c then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.',
+  metadata: Metadata {
+    internalRepr: Map(5) {
+      'google.rpc.errorinfo-bin' => [Array],
+      'google.rpc.help-bin' => [Array],
+      'google.rpc.localizedmessage-bin' => [Array],
+      'grpc-status-details-bin' => [Array],
+      'x-debug-tracking-id' => [Array]
+    },
+    opaqueData: Map(0) {},
+    options: {}
+  },
+  statusDetails: [
+    ErrorInfo {
+      metadata: [Object],
+      reason: 'SERVICE_DISABLED',
+      domain: 'googleapis.com'
+    },
+    LocalizedMessage {
+      locale: 'en-US',
+      message: 'Cloud Firestore API has not been used in project benchmark-intelligence-a5b7c before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=benchmark-intelligence-a5b7c then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.'
+    },
+    Help { links: [Array] }
+  ],
+  reason: 'SERVICE_DISABLED',
+  domain: 'googleapis.com',
+  errorInfoMetadata: {
+    service: 'firestore.googleapis.com',
+    containerInfo: 'benchmark-intelligence-a5b7c',
+    activationUrl: 'https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=benchmark-intelligence-a5b7c',
+    consumer: 'projects/benchmark-intelligence-a5b7c',
+    serviceTitle: 'Cloud Firestore API'
+  }
+}
+Job failed: Error: 7 PERMISSION_DENIED: Cloud Firestore API has not been used in project benchmark-intelligence-a5b7c before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=benchmark-intelligence-a5b7c then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.
+    at callErrorFromStatus (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@grpc\grpc-js\build\src\call.js:32:19)
+    at Object.onReceiveStatus (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@grpc\grpc-js\build\src\client.js:359:73)
+    at Object.onReceiveStatus (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@grpc\grpc-js\build\src\client-interceptors.js:327:181)
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@grpc\grpc-js\build\src\resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@grpc\grpc-js\build\src\client.js:342:32)
+    at ServiceClientImpl.<anonymous> (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@grpc\grpc-js\build\src\make-client.js:105:19)
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\@google-cloud\firestore\build\src\v1\firestore_client.js:242:33
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:38:28
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\google-gax\build\src\normalCalls\timeout.js:44:16
+    at Object.request (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\google-gax\build\src\streamingCalls\streaming.js:234:40)
+    at makeRequest (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\retry-request\index.js:159:28)
+    at retryRequest (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\retry-request\index.js:119:5)
+    at StreamProxy.setStream (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\google-gax\build\src\streamingCalls\streaming.js:225:37)
+    at StreamingApiCaller.call (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:54:16)
+Caused by: Error
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\@google-cloud\firestore\build\src\index.js:1040:27
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30
+    at NoopContextManager.with (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@opentelemetry\api\build\src\context\NoopContextManager.js:25:19)
+    at ContextAPI.with (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@opentelemetry\api\build\src\api\context.js:60:46)
+    at NoopTracer.startActiveSpan (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@opentelemetry\api\build\src\trace\NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@opentelemetry\api\build\src\trace\ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:102:28)
+    at Firestore.getAll (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\@google-cloud\firestore\build\src\index.js:1031:32)
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\@google-cloud\firestore\build\src\reference\document-reference.js:182:36
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\firebase-admin\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30 {
+  code: 7,
+  details: 'Cloud Firestore API has not been used in project benchmark-intelligence-a5b7c before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=benchmark-intelligence-a5b7c then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.',
+  metadata: Metadata {
+    internalRepr: Map(5) {
+      'google.rpc.errorinfo-bin' => [Array],
+      'google.rpc.help-bin' => [Array],
+      'google.rpc.localizedmessage-bin' => [Array],
+      'grpc-status-details-bin' => [Array],
+      'x-debug-tracking-id' => [Array]
+    },
+    opaqueData: Map(0) {},
+    options: {}
+  },
+  statusDetails: [
+    ErrorInfo {
+      metadata: [Object],
+      reason: 'SERVICE_DISABLED',
+      domain: 'googleapis.com'
+    },
+    LocalizedMessage {
+      locale: 'en-US',
+      message: 'Cloud Firestore API has not been used in project benchmark-intelligence-a5b7c before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=benchmark-intelligence-a5b7c then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.'
+    },
+    Help { links: [Array] }
+  ],
+  reason: 'SERVICE_DISABLED',
+  domain: 'googleapis.com',
+  errorInfoMetadata: {
+    service: 'firestore.googleapis.com',
+    containerInfo: 'benchmark-intelligence-a5b7c',
+    activationUrl: 'https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=benchmark-intelligence-a5b7c',
+    consumer: 'projects/benchmark-intelligence-a5b7c',
+    serviceTitle: 'Cloud Firestore API'
+  }
+}

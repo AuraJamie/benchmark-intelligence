@@ -1,0 +1,52 @@
+[dotenv@17.3.1] injecting env (1) from .env -- tip: 🤖 agentic secret storage: https://dotenvx.com/as2
+Starting scraper...
+Establishing session via https://planningaccess.york.gov.uk/online-applications/search.do?action=weeklyList
+Submitting weekly list search...
+Could not find form specifically by name, trying generic forms...
+Found 10 total decided applications. Filtering for extensions...
+Scraper failed: Error: The file at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\firebase-key.json does not exist, or it is not a file. ENOENT: no such file or directory, lstat 'C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\firebase-key.json'
+    at Object.realpathSync (node:fs:2787:29)
+    at GoogleAuth._getApplicationCredentialsFromFilePath (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\google-gax\node_modules\google-auth-library\build\src\auth\googleauth.js:375:27)
+    at GoogleAuth._tryGetApplicationCredentialsFromEnvironmentVariable (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\google-gax\node_modules\google-auth-library\build\src\auth\googleauth.js:316:25)
+    at GoogleAuth.getFileProjectId (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\google-gax\node_modules\google-auth-library\build\src\auth\googleauth.js:606:30)
+    at GoogleAuth.findAndCacheProjectId (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\google-gax\node_modules\google-auth-library\build\src\auth\googleauth.js:161:46)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Caused by: Error
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@google-cloud\firestore\build\src\index.js:1040:27
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30
+    at NoopContextManager.with (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@opentelemetry\api\build\src\context\NoopContextManager.js:25:19)
+    at ContextAPI.with (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@opentelemetry\api\build\src\api\context.js:60:46)
+    at NoopTracer.startActiveSpan (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@opentelemetry\api\build\src\trace\NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@opentelemetry\api\build\src\trace\ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:102:28)
+    at Firestore.getAll (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@google-cloud\firestore\build\src\index.js:1031:32)
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@google-cloud\firestore\build\src\reference\document-reference.js:182:36
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30 {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'lstat',
+  path: 'C:\\Users\\jamie\\Desktop\\Business\\Planning Applications\\Benchmark Intelligence\\firebase-key.json'
+}
+Error: The file at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\firebase-key.json does not exist, or it is not a file. ENOENT: no such file or directory, lstat 'C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\firebase-key.json'
+    at Object.realpathSync (node:fs:2787:29)
+    at GoogleAuth._getApplicationCredentialsFromFilePath (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\google-gax\node_modules\google-auth-library\build\src\auth\googleauth.js:375:27)
+    at GoogleAuth._tryGetApplicationCredentialsFromEnvironmentVariable (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\google-gax\node_modules\google-auth-library\build\src\auth\googleauth.js:316:25)
+    at GoogleAuth.getFileProjectId (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\google-gax\node_modules\google-auth-library\build\src\auth\googleauth.js:606:30)
+    at GoogleAuth.findAndCacheProjectId (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\google-gax\node_modules\google-auth-library\build\src\auth\googleauth.js:161:46)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Caused by: Error
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@google-cloud\firestore\build\src\index.js:1040:27
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30
+    at NoopContextManager.with (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@opentelemetry\api\build\src\context\NoopContextManager.js:25:19)
+    at ContextAPI.with (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@opentelemetry\api\build\src\api\context.js:60:46)
+    at NoopTracer.startActiveSpan (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@opentelemetry\api\build\src\trace\NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@opentelemetry\api\build\src\trace\ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:102:28)
+    at Firestore.getAll (C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@google-cloud\firestore\build\src\index.js:1031:32)
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@google-cloud\firestore\build\src\reference\document-reference.js:182:36
+    at C:\Users\jamie\Desktop\Business\Planning Applications\Benchmark Intelligence\functions\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30 {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'lstat',
+  path: 'C:\\Users\\jamie\\Desktop\\Business\\Planning Applications\\Benchmark Intelligence\\firebase-key.json'
+}

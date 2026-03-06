@@ -1,0 +1,233 @@
+[dotenv@17.3.1] injecting env (1) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+Starting scraper...
+Establishing session via https://planningaccess.york.gov.uk/online-applications/search.do?action=weeklyList
+Submitting weekly list search...
+Failed to find form. Dumping page content for debugging:
+Skip to main content
+City of York Council
+My AccountCOUNCIL SERVICES
+Search planning applications
+HomePlanning and buildingPlanning applicationsSearch planning applications
+Search 
+My Profile 
+Saved Searches
+Login
+Register
+Planning – Weekly List
+
+Search Planning Applications either validated or decided in a given week.
+
+Simple Advanced Weekly/Monthly Lists 
+Search
+Weekly List 
+Search
+Monthly List
+Property Map
+Parish:
+All
+Acaster Malbis Parish Council
+ASKBRY
+ASKHAM
+Askham Bryan Parish Council
+Askham Richard Parish Council
+Bishopthorpe Parish Council
+Clifton Planning Panel
+Clifton Without Parish Council
+Copmanthorpe Parish Council
+Deighton Parish Council
+Dringhouses/Woodthorpe Planning Panel
+Dunnington Parish Council
+Earswick Parish Council
+Elvington Parish Council
+Fishergate Planning Panel
+Fulford Parish Council
+Guildhall Planning Panel
+Haxby Town Council
+Heslington Parish Council
+Hessay Parish Council
+Heworth Planning Panel
+Heworth Without Parish Council
+Holgate Planning Panel
+Holtby Parish Council
+Hull Road Planning Panel
+Huntington Parish Council
+Kexby Parish Council
+Micklegate Planning Panel
+Murton Parish Council
+Naburn Parish Council
+Nether Poppleton Parish Council
+New Earswick Parish Council
+No Parish
+Osbaldwick Parish Council
+PARISH
+Parish Of Rufforth With Knapton
+Rawcliffe Parish Council
+Skelton Parish Council
+Stockton-on-the-Forest Parish Council
+Strensall With Towthorpe Parish Council
+Test Parish Council
+Upper Poppleton Parish Council
+Wheldrake Parish Council
+Wigginton Parish Council
+Ward:
+All
+Acomb
+Bishopthorpe
+Clifton
+Copmanthorpe
+Dringhouses And Woodthorpe
+Fishergate
+Fulford And Heslington
+Guildhall
+Haxby And Wigginton
+Heworth
+Heworth Without
+Holgate
+Hull Road
+Huntington/New Earswick
+Micklegate
+Osbaldwick And Derwent
+Rawcliffe And Clifton Without
+Rural West York
+Strensall
+Westfield
+Wheldrake
+Week beginning:
+02 Mar 2026
+23 Feb 2026
+16 Feb 2026
+09 Feb 2026
+02 Feb 2026
+26 Jan 2026
+19 Jan 2026
+12 Jan 2026
+05 Jan 2026
+29 Dec 2025
+22 Dec 2025
+15 Dec 2025
+08 Dec 2025
+01 Dec 2025
+24 Nov 2025
+17 Nov 2025
+10 Nov 2025
+03 Nov 2025
+27 Oct 2025
+20 Oct 2025
+13 Oct 2025
+06 Oct 2025
+29 Sep 2025
+22 Sep 2025
+15 Sep 2025
+08 Sep 2025
+01 Sep 2025
+25 Aug 2025
+18 Aug 2025
+11 Aug 2025
+04 Aug 2025
+28 Jul 2025
+21 Jul 2025
+14 Jul 2025
+07 Jul 2025
+30 Jun 2025
+23 Jun 2025
+16 Jun 2025
+09 Jun 2025
+02 Jun 2025
+26 May 2025
+19 May 2025
+12 May 2025
+05 May 2025
+28 Apr 2025
+21 Apr 2025
+14 Apr 2025
+07 Apr 2025
+31 Mar 2025
+24 Mar 2025
+17 Mar 2025
+10 Mar 2025
+03 Mar 2025
+24 Feb 2025
+17 Feb 2025
+10 Feb 2025
+03 Feb 2025
+27 Jan 2025
+20 Jan 2025
+13 Jan 2025
+06 Jan 2025
+30 Dec 2024
+23 Dec 2024
+16 Dec 2024
+09 Dec 2024
+02 Dec 2024
+25 Nov 2024
+18 Nov 2024
+11 Nov 2024
+04 Nov 2024
+28 Oct 2024
+21 Oct 2024
+14 Oct 2024
+07 Oct 2024
+30 Sep 2024
+23 Sep 2024
+16 Sep 2024
+09 Sep 2024
+02 Sep 2024
+26 Aug 2024
+19 Aug 2024
+12 Aug 2024
+05 Aug 2024
+29 Jul 2024
+22 Jul 2024
+15 Jul 2024
+08 Jul 2024
+01 Jul 2024
+24 Jun 2024
+17 Jun 2024
+10 Jun 2024
+03 Jun 2024
+27 May 2024
+20 May 2024
+13 May 2024
+06 May 2024
+29 Apr 2024
+22 Apr 2024
+15 Apr 2024
+08 Apr 2024
+Show applications:
+ Validated in this week
+ Decided in this week
+
+FEEDBACK
+Facebook logo
+Twitter logo
+YouTube logo
+Instagram logo
+CONTACT USPRIVACYTERMS AND CONDITIONSSECURITYACCESSIBILITY
+
+Copyright © 2026 City of York Council.
+Scraper failed: TimeoutError: Waiting for selector `form[name="searchCriteria"]` failed
+    at CSSQueryHandler.waitFor (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/common/QueryHandler.js:211:46)
+    at async CdpFrame.waitForSelector (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Frame.js:541:21)
+    at async CdpPage.waitForSelector (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Page.js:1387:20)
+    at async Module.runScraper (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/scraper.js:31:13) {
+  cause: TimeoutError: Waiting failed: 10000ms exceeded
+      at new WaitTask (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/common/WaitTask.js:46:34)
+      at IsolatedWorld.waitForFunction (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Realm.js:22:26)
+      at CSSQueryHandler.waitFor (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/common/QueryHandler.js:176:95)
+      at async CdpFrame.waitForSelector (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Frame.js:541:21)
+      at async CdpPage.waitForSelector (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Page.js:1387:20)
+      at async Module.runScraper (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/scraper.js:31:13)
+}
+TimeoutError: Waiting for selector `form[name="searchCriteria"]` failed
+    at CSSQueryHandler.waitFor (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/common/QueryHandler.js:211:46)
+    at async CdpFrame.waitForSelector (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Frame.js:541:21)
+    at async CdpPage.waitForSelector (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Page.js:1387:20)
+    at async Module.runScraper (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/scraper.js:31:13) {
+  cause: TimeoutError: Waiting failed: 10000ms exceeded
+      at new WaitTask (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/common/WaitTask.js:46:34)
+      at IsolatedWorld.waitForFunction (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Realm.js:22:26)
+      at CSSQueryHandler.waitFor (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/common/QueryHandler.js:176:95)
+      at async CdpFrame.waitForSelector (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Frame.js:541:21)
+      at async CdpPage.waitForSelector (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Page.js:1387:20)
+      at async Module.runScraper (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/scraper.js:31:13)
+}

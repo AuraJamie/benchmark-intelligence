@@ -1,0 +1,20 @@
+[dotenv@17.3.1] injecting env (1) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+Starting scraper...
+Establishing session via https://planningaccess.york.gov.uk/online-applications/search.do?action=weeklyList
+Submitting weekly list search...
+Scraper failed: Error [TypeError]: Cannot set properties of null (setting 'value')
+    at evaluate (evaluate at Module.runScraper (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/scraper.js:30:20), <anonymous>:1:71)
+    at #evaluate (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/ExecutionContext.js:388:19)
+    at async ExecutionContext.evaluate (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/ExecutionContext.js:274:16)
+    at async IsolatedWorld.evaluate (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/IsolatedWorld.js:97:16)
+    at async CdpFrame.evaluate (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Frame.js:359:20)
+    at async CdpPage.evaluate (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Page.js:826:20)
+    at async Module.runScraper (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/scraper.js:30:9)
+Error [TypeError]: Cannot set properties of null (setting 'value')
+    at evaluate (evaluate at Module.runScraper (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/scraper.js:30:20), <anonymous>:1:71)
+    at #evaluate (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/ExecutionContext.js:388:19)
+    at async ExecutionContext.evaluate (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/ExecutionContext.js:274:16)
+    at async IsolatedWorld.evaluate (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/IsolatedWorld.js:97:16)
+    at async CdpFrame.evaluate (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Frame.js:359:20)
+    at async CdpPage.evaluate (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Page.js:826:20)
+    at async Module.runScraper (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/scraper.js:30:9)

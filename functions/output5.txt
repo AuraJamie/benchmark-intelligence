@@ -1,0 +1,20 @@
+[dotenv@17.3.1] injecting env (1) from .env -- tip: 🤖 agentic secret storage: https://dotenvx.com/as2
+Starting scraper...
+Establishing session via https://planningaccess.york.gov.uk/online-applications/search.do?action=weeklyList
+Submitting weekly list search...
+Could not find form specifically by name, trying generic forms...
+Found 10 total decided applications. Filtering for extensions...
+Fetching details for TAYE94SJJ7O00...
+Mock saved to Firestore: {
+  id: 'TAYE94SJJ7O00',
+  address: '82 Osbaldwick Lane York YO10 3AX',
+  description: 'Single storey rear extension and conversion of garage to habitable space',
+  status: 'New',
+  applicantName: 'Unknown',
+  dateDecided: '2026-03-05T01:16:42.479Z',
+  url: 'https://planningaccess.york.gov.uk/online-applications/online-applications/applicationDetails.do?keyVal=TAYE94SJJ7O00&activeTab=summary',
+  notes: '',
+  collectionId: null,
+  timestamp: 2026-03-05T01:16:42.481Z
+}
+Scrape finished. Added: 1, Skipped: 0, Errors: 0

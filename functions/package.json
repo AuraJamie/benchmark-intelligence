@@ -1,0 +1,28 @@
+{
+  "name": "functions",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@google-cloud/firestore": "^8.3.0",
+    "axios": "^1.13.6",
+    "axios-cookiejar-support": "^6.0.5",
+    "cheerio": "^1.2.0",
+    "dotenv": "^17.3.1",
+    "firebase-admin": "^13.7.0",
+    "firebase-functions": "^7.0.6",
+    "puppeteer": "^24.38.0",
+    "tough-cookie": "^6.0.0"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.4.1",
+    "nodemon": "^3.1.14"
+  }
+}

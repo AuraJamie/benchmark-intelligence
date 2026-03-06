@@ -1,0 +1,30 @@
+[dotenv@17.3.1] injecting env (1) from .env -- tip: ⚙️  override existing env vars with { override: true }
+Starting scraper...
+Establishing session via https://planningaccess.york.gov.uk/online-applications/search.do?action=weeklyList
+Submitting weekly list search...
+Scraper failed: TimeoutError: Waiting for selector `form[name="searchCriteria"]` failed
+    at CSSQueryHandler.waitFor (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/common/QueryHandler.js:211:46)
+    at async CdpFrame.waitForSelector (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Frame.js:541:21)
+    at async CdpPage.waitForSelector (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Page.js:1387:20)
+    at async Module.runScraper (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/scraper.js:30:9) {
+  cause: TimeoutError: Waiting failed: 10000ms exceeded
+      at new WaitTask (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/common/WaitTask.js:46:34)
+      at IsolatedWorld.waitForFunction (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Realm.js:22:26)
+      at CSSQueryHandler.waitFor (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/common/QueryHandler.js:176:95)
+      at async CdpFrame.waitForSelector (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Frame.js:541:21)
+      at async CdpPage.waitForSelector (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Page.js:1387:20)
+      at async Module.runScraper (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/scraper.js:30:9)
+}
+TimeoutError: Waiting for selector `form[name="searchCriteria"]` failed
+    at CSSQueryHandler.waitFor (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/common/QueryHandler.js:211:46)
+    at async CdpFrame.waitForSelector (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Frame.js:541:21)
+    at async CdpPage.waitForSelector (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Page.js:1387:20)
+    at async Module.runScraper (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/scraper.js:30:9) {
+  cause: TimeoutError: Waiting failed: 10000ms exceeded
+      at new WaitTask (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/common/WaitTask.js:46:34)
+      at IsolatedWorld.waitForFunction (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Realm.js:22:26)
+      at CSSQueryHandler.waitFor (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/common/QueryHandler.js:176:95)
+      at async CdpFrame.waitForSelector (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Frame.js:541:21)
+      at async CdpPage.waitForSelector (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/node_modules/puppeteer-core/lib/esm/puppeteer/api/Page.js:1387:20)
+      at async Module.runScraper (file:///C:/Users/jamie/Desktop/Business/Planning%20Applications/Benchmark%20Intelligence/functions/scraper.js:30:9)
+}
