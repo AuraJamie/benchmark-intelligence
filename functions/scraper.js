@@ -148,15 +148,30 @@ export async function runScraper() {
                 const applicationValidated = $detail('th:contains("Application Validated")').next('td').text().trim();
                 const appStatus = $detail('th:contains("Status")').next('td').text().trim();
 
-                // Use exact match for the Decision header to avoid catching "Decision Issued Date"
-                const decisionText = $detail('th').filter((i, el) => $detail(el).text().trim() === 'Decision').next('td').text().trim();
-                const decisionDateStr = $detail('th').filter((i, el) => $detail(el).text().trim() === 'Decision Issued Date').next('td').text().trim();
+                // Use a very robust selector that finds "Decision" but excludes extra context like Date or Type
+                const decisionHeader = $detail('th').filter((i, el) => {
+                    const t = $detail(el).text().trim().toLowerCase();
+                    // Match "Decision" or "Decision:" but NOT "Decision Date" or "Decision Type"
+                    return t.includes('decision') && !t.includes('date') && !t.includes('type');
+                });
+                const decisionText = decisionHeader.next('td').text().trim();
+
+                const dateHeader = $detail('th').filter((i, el) => {
+                    const t = $detail(el).text().trim().toLowerCase();
+                    return t.includes('decision') && t.includes('date');
+                });
+                const decisionDateStr = dateHeader.next('td').text().trim();
 
                 const lowerDecision = decisionText.toLowerCase();
-                const isApproved = lowerDecision.includes('approv') || lowerDecision.includes('grant') || lowerDecision.includes('permit');
+                // Highly inclusive approval check
+                const isApproved = lowerDecision.includes('approv') ||
+                    lowerDecision.includes('grant') ||
+                    lowerDecision.includes('permit') ||
+                    lowerDecision.includes('allowed') ||
+                    lowerDecision.includes('acceptable');
 
                 if (!decisionText || !isApproved) {
-                    console.log(`Skipping ${keyVal} as decision is not approved (or selector failed). Found decision text: '${decisionText}'`);
+                    console.log(`Skipping ${keyVal}: Filtered out. Header: "${decisionHeader.text().trim()}", Value: "${decisionText}"`);
                     stats.filtered++;
                     continue;
                 }
