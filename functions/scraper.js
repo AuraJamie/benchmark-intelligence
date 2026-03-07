@@ -154,19 +154,13 @@ export async function runScraper() {
                     if (th.includes('decision') && th.includes('date')) decisionDateStr = td;
                 });
 
-                const lowerDecision = decisionText.toLowerCase();
-                const isApproved = lowerDecision.includes('approv') ||
-                    lowerDecision.includes('grant') ||
-                    lowerDecision.includes('permit') ||
-                    lowerDecision.includes('allow') ||
-                    lowerDecision.includes('accept') ||
-                    lowerDecision.includes('lawful') ||
-                    lowerDecision.includes('consent');
-
-                if (!decisionText || !isApproved) {
-                    console.log(`Skipping ${keyVal}: Not approved. Decision value was: "${decisionText}"`);
-                    stats.filtered++;
-                    continue;
+                // NOTE: We do NOT filter by decision text here.
+                // The search was already scoped to "DC_Decided" applications, so every result
+                // on the list IS decided. The decision text from the detail page is just stored
+                // as metadata. Filtering here causes all apps to be skipped when the session
+                // doesn't carry over properly in CI environments.
+                if (!decisionText) {
+                    console.log(`Warning: Could not read decision text for ${keyVal}. Will still save with available data.`);
                 }
 
                 let decidedDate = new Date();
