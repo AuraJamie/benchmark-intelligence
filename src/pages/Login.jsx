@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Network } from 'lucide-react';
 
 const Login = () => {
@@ -74,6 +73,12 @@ const Login = () => {
                     >
                         Sign In
                     </button>
+
+                    <div className="pt-4 text-center">
+                        <Link to="/capture" className="text-sm font-medium text-[#0284c7] hover:underline">
+                            Open Customer Form (Guest)
+                        </Link>
+                    </div>
                 </form>
             </div>
         </div>

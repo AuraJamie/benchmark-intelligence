@@ -2,7 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Network, CheckCircle2, Loader2 } from 'lucide-react';
 import { db } from '../firebase';
-import { doc, getDoc, addDoc, collection, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, getDocs, addDoc, collection, updateDoc, serverTimestamp, query, where } from 'firebase/firestore';
 
 const Capture = () => {
     const [searchParams] = useSearchParams();
@@ -17,6 +17,8 @@ const Capture = () => {
 
     const [loadingProject, setLoadingProject] = useState(false);
     const [projectData, setProjectData] = useState(null);
+    const [allProjects, setAllProjects] = useState([]);
+    const [selectedAddress, setSelectedAddress] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
@@ -40,6 +42,18 @@ const Capture = () => {
                 }
             };
             fetchProject();
+        } else {
+            const fetchAllProjects = async () => {
+                try {
+                    const q = query(collection(db, 'projects'));
+                    const snapshot = await getDocs(q);
+                    const projectsList = snapshot.docs.map(doc => ({ id: doc.id, address: doc.data().address }));
+                    setAllProjects(projectsList);
+                } catch (err) {
+                    console.error("Error fetching projects for autocomplete", err);
+                }
+            };
+            fetchAllProjects();
         }
     }, [projectId]);
 
@@ -49,18 +63,32 @@ const Capture = () => {
             setSubmitting(true);
             setError(null);
             try {
+                let finalProjectId = projectId;
+
+                if (!projectId && selectedAddress) {
+                    const matchedProject = allProjects.find(p => p.address === selectedAddress);
+                    if (matchedProject) {
+                        finalProjectId = matchedProject.id;
+                    }
+                }
+
                 // Add to homeowners collection
                 await addDoc(collection(db, 'homeowners'), {
                     ...formData,
-                    projectId: projectId || null,
+                    address: selectedAddress || (projectData ? projectData.address : ''),
+                    projectId: finalProjectId || null,
                     timestamp: serverTimestamp()
                 });
 
-                // Update project status if projectId exists
-                if (projectId) {
-                    const projectRef = doc(db, 'projects', projectId);
+                // Update project status if finalProjectId exists
+                if (finalProjectId) {
+                    const projectRef = doc(db, 'projects', finalProjectId);
                     await updateDoc(projectRef, {
-                        status: 'Contacted' // Update status
+                        status: 'Contacted',
+                        homeownerName: formData.fullName,
+                        homeownerEmail: formData.email,
+                        homeownerPhone: formData.phone,
+                        homeownerSubmissionDate: new Date().toISOString()
                     });
                 }
 
@@ -134,6 +162,27 @@ const Capture = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
+                    {!projectId && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                Property Address
+                            </label>
+                            <input
+                                list="addresses"
+                                required
+                                value={selectedAddress}
+                                onChange={(e) => setSelectedAddress(e.target.value)}
+                                className="w-full rounded-lg border border-[#e2e8f0] px-4 py-3 text-sm focus:border-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#0f172a] transition-shadow"
+                                placeholder="Start typing your address..."
+                            />
+                            <datalist id="addresses">
+                                {allProjects.map(p => (
+                                    <option key={p.id} value={p.address} />
+                                ))}
+                            </datalist>
+                        </div>
+                    )}
+
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
                             Full Name

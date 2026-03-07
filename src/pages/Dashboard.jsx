@@ -1,4 +1,5 @@
-import { Search, Filter, Loader2, Link, MapPin, ExternalLink, X, Save, Map as MapIcon, List, Users, CheckCircle2 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { Search, Filter, Loader2, Link, MapPin, ExternalLink, X, Save, Map as MapIcon, List, Users, CheckCircle2, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, where, getDocs, writeBatch } from 'firebase/firestore';
@@ -21,12 +22,26 @@ const Dashboard = () => {
     const [selectedProject, setSelectedProject] = useState(null);
     const [editNotes, setEditNotes] = useState('');
     const [editStatus, setEditStatus] = useState('');
-    const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
+    const location = useLocation();
+
+    // Auto-detect viewMode from routing
+    const initialViewMode = location.pathname === '/map' ? 'map' : 'list';
+    const [viewMode, setViewMode] = useState(initialViewMode);
+
+    useEffect(() => {
+        setViewMode(location.pathname === '/map' ? 'map' : 'list');
+    }, [location.pathname]);
+
     const [syncing, setSyncing] = useState(false);
     const [syncStatus, setSyncStatus] = useState(null); // null | 'success' | 'error'
     const [builders, setBuilders] = useState([]);
     const [projectAssignments, setProjectAssignments] = useState([]);
     const [selectedBuilderToAssign, setSelectedBuilderToAssign] = useState('');
+
+    const [sortBy, setSortBy] = useState('dateDecidedDesc');
+    const [filterStatus, setFilterStatus] = useState('All');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 20;
 
     // Multi-select and collections logic
     const [selectedRowIds, setSelectedRowIds] = useState([]);
@@ -75,12 +90,39 @@ const Dashboard = () => {
         return () => unsubscribe();
     }, [selectedProject]);
 
-    const filteredProjects = projects.filter(p => {
-        const matchesSearch = p.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.collectionId?.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesSearch;
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, filterStatus, sortBy]);
+
+    let filteredProjects = projects.filter(p => {
+        const searchTerms = searchQuery.toLowerCase();
+        const matchesSearch = p.address?.toLowerCase().includes(searchTerms) ||
+            p.description?.toLowerCase().includes(searchTerms) ||
+            p.collectionId?.toLowerCase().includes(searchTerms) ||
+            p.homeownerName?.toLowerCase().includes(searchTerms) ||
+            p.reference?.toLowerCase().includes(searchTerms) ||
+            p.applicationStatus?.toLowerCase().includes(searchTerms) ||
+            p.homeownerEmail?.toLowerCase().includes(searchTerms);
+
+        const matchesStatus = filterStatus === 'All' || p.status === filterStatus;
+        return matchesSearch && matchesStatus;
     });
+
+    filteredProjects.sort((a, b) => {
+        if (sortBy === 'dateDecidedDesc') {
+            return new Date(b.dateDecided || 0) - new Date(a.dateDecided || 0);
+        } else if (sortBy === 'dateDecidedAsc') {
+            return new Date(a.dateDecided || 0) - new Date(b.dateDecided || 0);
+        } else if (sortBy === 'status') {
+            return (a.status || '').localeCompare(b.status || '');
+        }
+        return 0;
+    });
+
+    const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
+    const paginatedProjects = viewMode === 'list'
+        ? filteredProjects.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+        : filteredProjects;
 
     const openProject = (project) => {
         setSelectedProject(project);
@@ -217,65 +259,85 @@ const Dashboard = () => {
     };
 
     return (
-        <div className="w-full relative">
-            <header className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-semibold tracking-tight">Projects</h1>
-                    <p className="mt-2 text-sm text-gray-500">Manage intercepted council planning applications.</p>
-                </div>
-                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
-                    <div className="flex bg-gray-100 p-1 rounded-lg">
+        <>
+            <div className="w-full relative">
+                <header className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-semibold tracking-tight">Projects</h1>
+                        <p className="mt-2 text-sm text-gray-500">Manage intercepted council planning applications.</p>
+                    </div>
+                    <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
+                        <div className="flex bg-gray-100 p-1 rounded-lg">
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`flex-1 md:flex-none justify-center items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-[#0f172a]' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <List className="h-4 w-4 inline-block" /> List
+                            </button>
+                            <button
+                                onClick={() => setViewMode('map')}
+                                className={`flex-1 md:flex-none justify-center items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${viewMode === 'map' ? 'bg-white shadow-sm text-[#0f172a]' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <MapIcon className="h-4 w-4 inline-block" /> Map
+                            </button>
+                        </div>
                         <button
-                            onClick={() => setViewMode('list')}
-                            className={`flex-1 md:flex-none justify-center items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-[#0f172a]' : 'text-gray-500 hover:text-gray-700'}`}
+                            onClick={triggerSync}
+                            disabled={syncing}
+                            className="flex justify-center items-center gap-2 rounded-lg bg-[#0f172a] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-black focus:outline-none focus:ring-2 focus:ring-[#0f172a] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed w-full md:w-auto"
                         >
-                            <List className="h-4 w-4 inline-block" /> List
-                        </button>
-                        <button
-                            onClick={() => setViewMode('map')}
-                            className={`flex-1 md:flex-none justify-center items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${viewMode === 'map' ? 'bg-white shadow-sm text-[#0f172a]' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            <MapIcon className="h-4 w-4 inline-block" /> Map
+                            <Loader2 className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+                            {syncing ? 'Triggering...' : 'Sync Now'}
                         </button>
                     </div>
-                    <button
-                        onClick={triggerSync}
-                        disabled={syncing}
-                        className="flex justify-center items-center gap-2 rounded-lg bg-[#0f172a] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-black focus:outline-none focus:ring-2 focus:ring-[#0f172a] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed w-full md:w-auto"
-                    >
-                        <Loader2 className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-                        {syncing ? 'Triggering...' : 'Sync Now'}
-                    </button>
-                </div>
-            </header>
+                </header>
 
-            {syncStatus === 'success' && (
-                <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-                    ✓ Scraper job triggered successfully on GitHub Actions! New data will appear in a few minutes.
-                </div>
-            )}
-            {syncStatus === 'error' && (
-                <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                    ✗ Failed to trigger the scraper. Check your VITE_GITHUB_TOKEN in the .env file.
-                </div>
-            )}
-
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center gap-4 border-b border-gray-100 p-4">
-                    <div className="relative flex-1 max-w-md">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search addresses or descriptions..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-4 text-sm focus:border-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#0f172a]"
-                        />
+                {syncStatus === 'success' && (
+                    <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                        ✓ Scraper job triggered successfully on GitHub Actions! New data will appear in a few minutes.
                     </div>
-                    <button className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                        <Filter className="h-4 w-4 text-gray-500" />
-                        Filter
-                    </button>
+                )}
+                {syncStatus === 'error' && (
+                    <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                        ✗ Failed to trigger the scraper. Check your VITE_GITHUB_TOKEN in the .env file.
+                    </div>
+                )}
+
+                <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-4 border-b border-gray-100 p-4">
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search addresses or descriptions..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-4 text-sm focus:border-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#0f172a]"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 outline-none focus:border-[#0f172a]"
+                        >
+                            <option value="dateDecidedDesc">Sort: Newest</option>
+                            <option value="dateDecidedAsc">Sort: Oldest</option>
+                            <option value="status">Sort: Output Status</option>
+                        </select>
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 outline-none focus:border-[#0f172a]"
+                        >
+                            <option value="All">All Statuses</option>
+                            <option value="New">New</option>
+                            <option value="Contacted">Contacted</option>
+                            <option value="Assigned">Assigned</option>
+                            <option value="Dead">Dead</option>
+                        </select>
+                    </div>
                 </div>
 
                 {selectedRowIds.length > 0 && viewMode === 'list' && (
@@ -302,77 +364,103 @@ const Dashboard = () => {
 
                 <div className="overflow-x-auto">
                     {viewMode === 'list' ? (
-                        <table className="w-full text-left text-sm text-gray-600">
-                            <thead className="bg-gray-50/50 text-xs uppercase text-gray-500">
-                                <tr>
-                                    <th className="px-6 py-4 font-medium border-b border-gray-200 w-12 text-center">
-                                        <input
-                                            type="checkbox"
-                                            className="rounded border-gray-300 text-[#0f172a] focus:ring-[#0f172a]"
-                                            checked={filteredProjects.length > 0 && selectedRowIds.length === filteredProjects.length}
-                                            onChange={toggleSelectAll}
-                                        />
-                                    </th>
-                                    <th className="px-6 py-4 font-medium border-b border-gray-200">Address / Collection</th>
-                                    <th className="px-6 py-4 font-medium border-b border-gray-200">Description</th>
-                                    <th className="px-6 py-4 font-medium border-b border-gray-200">Status</th>
-                                    <th className="px-6 py-4 font-medium border-b border-gray-200">Decided</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 bg-white">
-                                {loading ? (
+                        <>
+                            <table className="w-full text-left text-sm text-gray-600">
+                                <thead className="bg-gray-50/50 text-xs uppercase text-gray-500">
                                     <tr>
-                                        <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
-                                            <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-gray-400" />
-                                            Loading projects...
-                                        </td>
+                                        <th className="px-6 py-4 font-medium border-b border-gray-200 w-12 text-center">
+                                            <input
+                                                type="checkbox"
+                                                className="rounded border-gray-300 text-[#0f172a] focus:ring-[#0f172a]"
+                                                checked={filteredProjects.length > 0 && selectedRowIds.length === filteredProjects.length}
+                                                onChange={toggleSelectAll}
+                                            />
+                                        </th>
+                                        <th className="px-6 py-4 font-medium border-b border-gray-200">Address / Collection</th>
+                                        <th className="px-6 py-4 font-medium border-b border-gray-200">Description</th>
+                                        <th className="px-6 py-4 font-medium border-b border-gray-200">Status</th>
+                                        <th className="px-6 py-4 font-medium border-b border-gray-200">Decided</th>
                                     </tr>
-                                ) : filteredProjects.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
-                                            No projects found matching your criteria.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    filteredProjects.map((project) => (
-                                        <tr key={project.id} onClick={() => openProject(project)} className={`hover:bg-gray-50/50 cursor-pointer transition-colors ${selectedRowIds.includes(project.id) ? 'bg-blue-50/30' : ''}`}>
-                                            <td className="px-6 py-4 text-center">
-                                                <input
-                                                    type="checkbox"
-                                                    className="rounded border-gray-300 text-[#0f172a] focus:ring-[#0f172a]"
-                                                    checked={selectedRowIds.includes(project.id)}
-                                                    onChange={(e) => toggleRowSelect(e, project.id)}
-                                                />
-                                            </td>
-                                            <td className="px-6 py-4 font-medium text-[#0f172a]">
-                                                {project.address}
-                                                {project.collectionId && (
-                                                    <div className="text-xs text-blue-600 font-normal mt-1 flex items-center gap-1">
-                                                        <Filter className="h-3 w-3" /> {project.collectionId}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 truncate max-w-xs" title={project.description}>
-                                                {project.description}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border ${project.status === 'New' ? 'border-blue-200 bg-blue-50 text-blue-700' :
-                                                    project.status === 'Contacted' ? 'border-yellow-200 bg-yellow-50 text-yellow-700' :
-                                                        project.status === 'Assigned' ? 'border-green-200 bg-green-50 text-green-700' :
-                                                            project.status === 'Dead' ? 'border-red-200 bg-red-50 text-red-700' :
-                                                                'border-gray-200 bg-gray-50 text-gray-700'
-                                                    }`}>
-                                                    {project.status || 'Unknown'}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                                                {project.dateDecided ? new Date(project.dateDecided).toLocaleDateString() : 'N/A'}
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 bg-white">
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
+                                                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-gray-400" />
+                                                Loading projects...
                                             </td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                    ) : filteredProjects.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
+                                                No projects found matching your criteria.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        paginatedProjects.map((project) => (
+                                            <tr key={project.id} onClick={() => openProject(project)} className={`hover:bg-gray-50/50 cursor-pointer transition-colors ${selectedRowIds.includes(project.id) ? 'bg-blue-50/30' : ''}`}>
+                                                <td className="px-6 py-4 text-center" onClick={(e) => { e.stopPropagation(); toggleRowSelect(e, project.id); }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="rounded border-gray-300 text-[#0f172a] focus:ring-[#0f172a]"
+                                                        checked={selectedRowIds.includes(project.id)}
+                                                        onChange={e => { }}
+                                                    />
+                                                </td>
+                                                <td className="px-6 py-4 font-medium text-[#0f172a]">
+                                                    {project.address}
+                                                    {project.collectionId && (
+                                                        <div className="text-xs text-blue-600 font-normal mt-1 flex items-center gap-1">
+                                                            <Filter className="h-3 w-3" /> {project.collectionId}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4 truncate max-w-xs" title={project.description}>
+                                                    {project.description}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border ${project.status === 'New' ? 'border-blue-200 bg-blue-50 text-blue-700' :
+                                                        project.status === 'Contacted' ? 'border-yellow-200 bg-yellow-50 text-yellow-700' :
+                                                            project.status === 'Assigned' ? 'border-green-200 bg-green-50 text-green-700' :
+                                                                project.status === 'Dead' ? 'border-red-200 bg-red-50 text-red-700' :
+                                                                    'border-gray-200 bg-gray-50 text-gray-700'
+                                                        }`}>
+                                                        {project.status || 'Unknown'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                                                    {project.dateDecided ? new Date(project.dateDecided).toLocaleDateString() : 'N/A'}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+
+                            {totalPages > 1 && (
+                                <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-3 sm:px-6">
+                                    <span className="text-sm text-gray-700">
+                                        Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredProjects.length)}</span> of <span className="font-medium">{filteredProjects.length}</span> results
+                                    </span>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                            disabled={currentPage === 1}
+                                            className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                                        >
+                                            <ChevronLeft className="h-4 w-4 mr-1" /> Prev
+                                        </button>
+                                        <button
+                                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={currentPage === totalPages}
+                                            className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                                        >
+                                            Next <ChevronRight className="h-4 w-4 ml-1" />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     ) : (
                         <div className="h-[600px] w-full relative z-0">
                             <MapContainer center={[53.9591, -1.0815]} zoom={13} style={{ height: '100%', width: '100%' }}>
@@ -405,7 +493,7 @@ const Dashboard = () => {
                         </div>
                     )}
                 </div>
-            </div>
+            </div >
 
             {/* Slide-over Panel for Project Details */}
             {
@@ -441,17 +529,58 @@ const Dashboard = () => {
                                                 <p className="mt-1 text-sm text-gray-900">{selectedProject.description}</p>
                                             </div>
 
-                                            <div>
-                                                <h3 className="text-sm font-medium text-gray-500">Applicant</h3>
-                                                <p className="mt-1 text-sm text-gray-900">{selectedProject.applicantName || 'Not recorded'}</p>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <h3 className="text-sm font-medium text-gray-500">Reference</h3>
+                                                    <p className="mt-1 text-sm text-gray-900">{selectedProject.reference || 'N/A'}</p>
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-sm font-medium text-gray-500">App Status</h3>
+                                                    <p className="mt-1 text-sm text-gray-900">{selectedProject.applicationStatus || 'N/A'}</p>
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-sm font-medium text-gray-500">Applicant</h3>
+                                                    <p className="mt-1 text-sm text-gray-900">{selectedProject.applicantName || 'Not recorded'}</p>
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-sm font-medium text-gray-500">Council Link</h3>
+                                                    <a href={selectedProject.url} target="_blank" rel="noopener noreferrer" className="mt-1 text-sm text-blue-600 hover:text-blue-500 flex items-center gap-1">
+                                                        View Portal <ExternalLink className="h-3 w-3" />
+                                                    </a>
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-sm font-medium text-gray-500">App Received</h3>
+                                                    <p className="mt-1 text-sm text-gray-900">{selectedProject.dateReceived || 'N/A'}</p>
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-sm font-medium text-gray-500">App Validated</h3>
+                                                    <p className="mt-1 text-sm text-gray-900">{selectedProject.dateValidated || 'N/A'}</p>
+                                                </div>
                                             </div>
 
-                                            <div>
-                                                <h3 className="text-sm font-medium text-gray-500">Council Link</h3>
-                                                <a href={selectedProject.url} target="_blank" rel="noopener noreferrer" className="mt-1 text-sm text-blue-600 hover:text-blue-500 flex items-center gap-1">
-                                                    View on Planning Portal <ExternalLink className="h-3 w-3" />
-                                                </a>
-                                            </div>
+                                            {selectedProject.homeownerName && (
+                                                <div className="bg-blue-50/50 p-4 border border-blue-100 rounded-lg space-y-3">
+                                                    <h3 className="text-sm font-semibold text-blue-900 mb-2">Homeowner Capture Details</h3>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <h4 className="text-xs font-medium text-blue-700 uppercase tracking-widers">Name</h4>
+                                                            <p className="mt-0.5 text-sm font-medium text-blue-900">{selectedProject.homeownerName}</p>
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="text-xs font-medium text-blue-700 uppercase tracking-widers">Submitted</h4>
+                                                            <p className="mt-0.5 text-sm text-blue-900">{selectedProject.homeownerSubmissionDate ? new Date(selectedProject.homeownerSubmissionDate).toLocaleDateString() : 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="text-xs font-medium text-blue-700 uppercase tracking-widers">Email</h4>
+                                                            <a href={`mailto:${selectedProject.homeownerEmail}`} className="mt-0.5 text-sm text-blue-600 hover:underline break-all">{selectedProject.homeownerEmail}</a>
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="text-xs font-medium text-blue-700 uppercase tracking-widers">Phone</h4>
+                                                            <a href={`tel:${selectedProject.homeownerPhone}`} className="mt-0.5 text-sm text-blue-600 hover:underline">{selectedProject.homeownerPhone}</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             <hr className="border-gray-200" />
 
@@ -555,9 +684,10 @@ const Dashboard = () => {
                                 </div>
                             </div>
                         </div>
-            )}
                     </div>
-                );
-    };
+                )}
+        </>
+    );
+};
 
-            export default Dashboard;
+export default Dashboard;

@@ -6,7 +6,7 @@ const Layout = ({ children }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
-        <div className="flex bg-gray-50 min-h-screen font-sans text-[#0f172a]">
+        <div className="flex bg-gray-50 h-screen overflow-hidden font-sans text-[#0f172a]">
             {/* Mobile overlay */}
             {sidebarOpen && (
                 <div

@@ -23,6 +23,14 @@ function App() {
                     }
                 />
                 <Route
+                    path="/map"
+                    element={
+                        <ProtectedRoute>
+                            <Dashboard />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
                     path="/builders"
                     element={
                         <ProtectedRoute>

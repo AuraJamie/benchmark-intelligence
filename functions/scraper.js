@@ -147,8 +147,12 @@ export async function runScraper() {
                 // Note: Actual fields depending on York's markup structure.
                 const fullDescription = $detail('th:contains("Proposal")').next('td').text().trim() || description;
                 const applicantName = $detail('th:contains("Applicant")').next('td').text().trim() || "Unknown";
+                const reference = $detail('th:contains("Reference")').next('td').text().trim();
+                const applicationReceived = $detail('th:contains("Application Received")').next('td').text().trim();
+                const applicationValidated = $detail('th:contains("Application Validated")').next('td').text().trim();
+                const appStatus = $detail('th:contains("Status")').next('td').text().trim();
 
-                const decisionText = $detail('th:contains("Decision")').next('td').text().trim();
+                const decisionText = $detail('th:contains("Decision")').first().next('td').text().trim();
                 const decisionDateStr = $detail('th:contains("Decision Issued Date")').next('td').text().trim();
 
                 const lowerDecision = decisionText.toLowerCase();
@@ -168,10 +172,14 @@ export async function runScraper() {
 
                 const projectData = {
                     id: keyVal,
+                    reference: reference || null,
                     address: addressText,
                     description: fullDescription,
                     status: 'New',
+                    applicationStatus: appStatus || decisionText || 'Unknown',
                     applicantName: applicantName,
+                    dateReceived: applicationReceived || null,
+                    dateValidated: applicationValidated || null,
                     dateDecided: decidedDate.toISOString(),
                     url: url,
                     notes: '',
