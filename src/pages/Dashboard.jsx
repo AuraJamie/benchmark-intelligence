@@ -204,40 +204,44 @@ const Dashboard = () => {
             );
 
             if (response.status === 204) {
-                // Success triggering. Now listen for the log document.
                 const q = query(
                     collection(db, 'scraper_logs'),
                     orderBy('timestamp', 'desc'),
                     limit(1)
                 );
 
-                const unsubscribe = onSnapshot(q, (snapshot) => {
-                    if (snapshot.empty) return;
-                    const logDoc = snapshot.docs[0];
-                    const logData = logDoc.data();
+                let unsubscribe;
+                let timeoutId;
 
-                    // Handle potential Firestore Timestamp object conversion
-                    let logTime;
+                unsubscribe = onSnapshot(q, (snapshot) => {
+                    if (snapshot.empty) return;
+                    const logData = snapshot.docs[0].data();
+
+                    // Convert Firestore Timestamp -> ms
+                    let logTime = 0;
                     if (logData.timestamp && typeof logData.timestamp.toMillis === 'function') {
                         logTime = logData.timestamp.toMillis();
                     } else if (logData.timestamp instanceof Date) {
                         logTime = logData.timestamp.getTime();
-                    } else {
+                    } else if (logData.timestamp) {
                         logTime = new Date(logData.timestamp).getTime();
                     }
 
-                    // Use a slightly larger buffer (5s) to account for client/server clock drift 
-                    // and ensure we don't pick up a very recent PREVIOUS log
-                    if (logTime > (syncStartTime - 5000)) {
+                    // Accept any log written within 30s of when we triggered (generous clock drift buffer)
+                    const isNewLog = logTime > (syncStartTime - 30000);
+                    console.log(`Listener fired. logTime=${logTime}, syncStartTime=${syncStartTime}, diff=${logTime - syncStartTime}ms, isNewLog=${isNewLog}`);
+
+                    if (isNewLog) {
+                        clearTimeout(timeoutId);
+                        unsubscribe();
                         setSyncReport(logData);
                         setSyncStatus('success');
                         setSyncing(false);
-                        unsubscribe(); // Stop listening
                     }
                 });
 
-                // Fail-safe: if no log appears in 5 minutes, stop waiting
-                setTimeout(() => {
+                // Fail-safe: if no log appears in 10 minutes, stop waiting
+                timeoutId = setTimeout(() => {
                     unsubscribe();
                     setSyncing(prevSyncing => {
                         if (prevSyncing) {
@@ -246,7 +250,7 @@ const Dashboard = () => {
                         }
                         return prevSyncing;
                     });
-                }, 300000);
+                }, 600000);
 
             } else {
                 const err = await response.json();

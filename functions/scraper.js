@@ -31,14 +31,6 @@ export async function runScraper() {
         const formSelector = 'form[name="searchCriteriaForm"], form#monthlyListForm';
         await page.waitForSelector(formSelector, { timeout: 10000 });
 
-        // Select the most recent month (usually already selected but being explicit)
-        await page.evaluate(() => {
-            const monthSelect = document.querySelector('#month');
-            if (monthSelect && monthSelect.options.length > 0) {
-                // We'll keep the default (current/latest month)
-            }
-        });
-
         // Use Puppeteer's native click to trigger React/DOM events to guarantee the radio group state updates on CI
         try {
             const radioSelector = 'input[name="dateType"][value="DC_Decided"]';
@@ -110,31 +102,22 @@ export async function runScraper() {
 
         console.log(`Extracted a total of ${extensionApps.length} extension applications from all pages.`);
 
-        // Now iterate through the collected extensions
+        // Now iterate through ALL collected extensions.
+        // We always fetch the detail page for EVERY application — we never skip based on existence.
+        // This ensures that deleted documents are always re-created on the next sync.
         for (const app of extensionApps) {
             const { keyVal, url, description, addressText } = app;
-
-            // Check if it already exists in DB
             const docRef = db.collection('projects').doc(keyVal);
-            const existingDoc = await docRef.get();
 
-            if (existingDoc.exists) {
-                stats.existing++;
-                continue;
-            }
-
-            // We found a new extension. Let's dig deeper into the application details page.
             try {
                 console.log(`Fetching details for ${keyVal}...`);
 
-                // Navigate with a slightly longer timeout and wait for network to be truly idle
                 await page.goto(url, { waitUntil: 'networkidle2', timeout: 45000 });
 
                 try {
-                    // Wait longer for the table to appear, as York's portal can be slow
                     await page.waitForSelector('#simpleDetailsTable', { timeout: 15000 });
                 } catch (e) {
-                    console.log(`Warning: #simpleDetailsTable not found for ${keyVal}. Page may not have loaded or session might be invalid.`);
+                    console.log(`Warning: #simpleDetailsTable not found for ${keyVal}.`);
                 }
 
                 const detailHtml = await page.content();
@@ -150,7 +133,7 @@ export async function runScraper() {
                 let decisionText = "";
                 let decisionDateStr = "";
 
-                // Iterate through all table rows to find matches regardless of exact header text
+                // Iterate through all table rows - case-insensitive, header-variant agnostic
                 $detail('#simpleDetailsTable tr, .detailstable tr').each((i, row) => {
                     const th = $detail(row).find('th').text().trim().toLowerCase();
                     const td = $detail(row).find('td').text().trim();
@@ -158,13 +141,12 @@ export async function runScraper() {
                     if (th.includes('proposal') || th.includes('description')) fullDescription = td;
                     if (th.includes('applicant')) applicantName = td;
                     if (th === 'reference' || th === 'ref. no:') reference = td;
-                    if (th.includes('received')) applicationReceived = td;
+                    if (th.includes('received') && !th.includes('validated')) applicationReceived = td;
                     if (th.includes('validated')) applicationValidated = td;
                     if (th === 'status' || th === 'app status') appStatus = td;
 
-                    // Specific logic for Decision to avoid Date/Type headers
-                    if ((th.includes('decision') && !th.includes('date') && !th.includes('type')) || th === 'decision') {
-                        // If we haven't found a better decision, or if this is the primary "Decision" field
+                    // Decision: match any header containing "decision" but NOT "date" or "type"
+                    if (th.includes('decision') && !th.includes('date') && !th.includes('type')) {
                         if (!decisionText || th === 'decision') {
                             decisionText = td;
                         }
@@ -173,7 +155,6 @@ export async function runScraper() {
                 });
 
                 const lowerDecision = decisionText.toLowerCase();
-                // Highly inclusive approval check - include everything that implies a positive outcome
                 const isApproved = lowerDecision.includes('approv') ||
                     lowerDecision.includes('grant') ||
                     lowerDecision.includes('permit') ||
@@ -183,7 +164,7 @@ export async function runScraper() {
                     lowerDecision.includes('consent');
 
                 if (!decisionText || !isApproved) {
-                    console.log(`Skipping ${keyVal}: Not approved or decision missing. Value: "${decisionText}"`);
+                    console.log(`Skipping ${keyVal}: Not approved. Decision value was: "${decisionText}"`);
                     stats.filtered++;
                     continue;
                 }
@@ -194,55 +175,76 @@ export async function runScraper() {
                     if (!isNaN(parsed)) decidedDate = parsed;
                 }
 
-                const projectData = {
-                    id: keyVal,
-                    reference: reference || null,
-                    address: addressText,
-                    description: fullDescription,
-                    status: 'New',
-                    applicationStatus: appStatus || decisionText || 'Unknown',
-                    applicantName: applicantName,
-                    dateReceived: applicationReceived || null,
-                    dateValidated: applicationValidated || null,
-                    dateDecided: decidedDate.toISOString(),
-                    url: url,
-                    notes: '',
-                    collectionId: null,
-                    timestamp: new Date(),
-                    coordinates: null // Placeholder
-                };
+                // Check if doc already exists so we can preserve user-entered fields
+                const existingDoc = await docRef.get();
 
-                // Geocoding via Nominatim (OpenStreetMap)
-                try {
-                    console.log(`Geocoding address: ${addressText}...`);
-                    const encodedAddress = encodeURIComponent(`${addressText}, York, UK`);
-                    // Nominatim usage policy requires an identifying User-Agent
-                    const geoResponse = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`, {
-                        headers: { 'User-Agent': 'BenchmarkIntelligence/1.0 (jamie.dark.business@gmail.com)' }
+                if (existingDoc.exists) {
+                    // Document exists — update only the council-sourced scrape fields.
+                    // NEVER overwrite user-entered fields like status, notes, collectionId, homeowner data.
+                    const existing = existingDoc.data();
+                    await docRef.update({
+                        reference: reference || existing.reference || null,
+                        address: addressText || existing.address,
+                        description: fullDescription || existing.description,
+                        applicationStatus: appStatus || decisionText || existing.applicationStatus || 'Unknown',
+                        applicantName: applicantName !== 'Unknown' ? applicantName : (existing.applicantName || 'Unknown'),
+                        dateReceived: applicationReceived || existing.dateReceived || null,
+                        dateValidated: applicationValidated || existing.dateValidated || null,
+                        dateDecided: decidedDate.toISOString(),
+                        url: url,
                     });
+                    console.log(`Updated existing: ${keyVal}`);
+                    stats.existing++;
+                } else {
+                    // Document does not exist (new or previously deleted) — create fresh
+                    console.log(`Creating new/restored doc: ${keyVal}`);
+                    const projectData = {
+                        id: keyVal,
+                        reference: reference || null,
+                        address: addressText,
+                        description: fullDescription,
+                        status: 'New',
+                        applicationStatus: appStatus || decisionText || 'Unknown',
+                        applicantName: applicantName,
+                        dateReceived: applicationReceived || null,
+                        dateValidated: applicationValidated || null,
+                        dateDecided: decidedDate.toISOString(),
+                        url: url,
+                        notes: '',
+                        collectionId: null,
+                        timestamp: new Date(),
+                        coordinates: null
+                    };
 
-                    if (geoResponse.data && geoResponse.data.length > 0) {
-                        const location = geoResponse.data[0];
-                        projectData.coordinates = {
-                            lat: parseFloat(location.lat),
-                            lng: parseFloat(location.lon)
-                        };
-                        console.log(`Found coordinates: ${location.lat}, ${location.lon}`);
-                    } else {
-                        console.log(`No coordinates found for: ${addressText}`);
+                    // Geocoding via Nominatim (OpenStreetMap)
+                    try {
+                        console.log(`Geocoding address: ${addressText}...`);
+                        const encodedAddress = encodeURIComponent(`${addressText}, York, UK`);
+                        const geoResponse = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`, {
+                            headers: { 'User-Agent': 'BenchmarkIntelligence/1.0 (jamie.dark.business@gmail.com)' }
+                        });
+
+                        if (geoResponse.data && geoResponse.data.length > 0) {
+                            const location = geoResponse.data[0];
+                            projectData.coordinates = {
+                                lat: parseFloat(location.lat),
+                                lng: parseFloat(location.lon)
+                            };
+                            console.log(`Geocoded: ${location.lat}, ${location.lon}`);
+                        }
+                    } catch (geoErr) {
+                        console.error(`Geocoding failed for ${keyVal}:`, geoErr.message);
                     }
-                } catch (geoErr) {
-                    console.error(`Geocoding failed for ${keyVal}:`, geoErr.message);
+
+                    await docRef.set(projectData);
+                    stats.added++;
                 }
 
-                await docRef.set(projectData);
-                stats.added++;
-
-                // Wait briefly to avoid hitting the council servers too violently
+                // Brief pause to avoid hammering the council server
                 await new Promise(r => setTimeout(r, 750));
 
             } catch (detailErr) {
-                console.error(`Error scraping detail page for ${keyVal}:`, detailErr.message);
+                console.error(`Error processing ${keyVal}:`, detailErr.message);
                 stats.errors++;
             }
         }
