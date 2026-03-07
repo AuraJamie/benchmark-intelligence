@@ -41,8 +41,9 @@ export async function runScraper() {
             const searchType = document.querySelector('#searchCriteria_searchType') || form.querySelector('select[name*="searchType"]');
             if (searchType) searchType.value = 'Application';
 
-            const dateType = document.querySelector('#dateType') || form.querySelector('select[name="dateType"]');
-            if (dateType) dateType.value = 'DC_Decided';
+            // Click the 'Decided' radio button explicitly if it exists
+            const dateDecidedRadio = form.querySelector('input[name="dateType"][value="DC_Decided"]') || document.querySelector('#dateDecided');
+            if (dateDecidedRadio) dateDecidedRadio.checked = true;
 
             const dateListType = document.querySelector('#searchCriteria_dateListType') || form.querySelector('select[name*="dateListType"]');
             if (dateListType) dateListType.value = 'thisWeek';
@@ -130,13 +131,28 @@ export async function runScraper() {
                 const fullDescription = $detail('th:contains("Proposal")').next('td').text().trim() || description;
                 const applicantName = $detail('th:contains("Applicant")').next('td').text().trim() || "Unknown";
 
+                const decisionText = $detail('th:contains("Decision")').next('td').text().trim();
+                const decisionDateStr = $detail('th:contains("Decision Issued Date")').next('td').text().trim();
+
+                if (!decisionText || !decisionText.toLowerCase().includes('approv')) {
+                    console.log(`Skipping ${keyVal} as decision is not approved: '${decisionText}'`);
+                    stats.skipped++;
+                    continue;
+                }
+
+                let decidedDate = new Date();
+                if (decisionDateStr) {
+                    const parsed = new Date(decisionDateStr);
+                    if (!isNaN(parsed)) decidedDate = parsed;
+                }
+
                 const projectData = {
                     id: keyVal,
                     address: addressText,
                     description: fullDescription,
                     status: 'New',
                     applicantName: applicantName,
-                    dateDecided: new Date().toISOString(),
+                    dateDecided: decidedDate.toISOString(),
                     url: url,
                     notes: '',
                     collectionId: null,
