@@ -222,23 +222,21 @@ const Dashboard = () => {
                             setSyncStatus('success');
                             setSyncing(false);
                             unsubscribe(); // Stop listening
-                            // Clear status after 10 seconds
-                            setTimeout(() => {
-                                setSyncStatus(null);
-                                setSyncReport(null);
-                            }, 15000);
                         }
                     }
                 });
 
-                // Fail-safe: if no log appears in 2 minutes, stop waiting
+                // Fail-safe: if no log appears in 5 minutes, stop waiting
                 setTimeout(() => {
                     unsubscribe();
-                    if (syncing) {
-                        setSyncing(false);
-                        setSyncStatus('error');
-                    }
-                }, 120000);
+                    setSyncing(prevSyncing => {
+                        if (prevSyncing) {
+                            setSyncStatus('error');
+                            return false;
+                        }
+                        return prevSyncing;
+                    });
+                }, 300000);
 
             } else {
                 const err = await response.json();
@@ -329,7 +327,13 @@ const Dashboard = () => {
                 </header>
 
                 {syncStatus === 'success' && syncReport && (
-                    <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-6 py-4 shadow-sm">
+                    <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-6 py-4 shadow-sm relative">
+                        <button
+                            onClick={() => { setSyncStatus(null); setSyncReport(null); }}
+                            className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
                         <div className="flex items-center gap-3 mb-2">
                             <CheckCircle2 className="h-5 w-5 text-green-600" />
                             <h3 className="text-sm font-bold text-green-900">Sync Complete</h3>
@@ -354,15 +358,18 @@ const Dashboard = () => {
                         </div>
                     </div>
                 )}
-                {syncStatus === 'waiting' && syncing && (
+                {syncing && (
                     <div className="mb-6 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800 flex items-center gap-3">
                         <Loader2 className="h-4 w-4 animate-spin" />
                         <span>The scraper is currently running on GitHub. This usually takes 1-2 minutes. Results will appear here automatically...</span>
                     </div>
                 )}
-                {syncStatus === 'error' && (
-                    <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                        ✗ Sync failed or timed out. Please check your GitHub token and repository actions status.
+                {syncStatus === 'error' && !syncing && (
+                    <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 flex justify-between items-center">
+                        <span>✗ Sync failed or timed out. Please check your GitHub token and repository actions status.</span>
+                        <button onClick={() => setSyncStatus(null)} className="text-red-400 hover:text-red-600">
+                            <X className="h-4 w-4" />
+                        </button>
                     </div>
                 )}
 
