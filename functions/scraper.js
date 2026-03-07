@@ -127,51 +127,63 @@ export async function runScraper() {
             try {
                 console.log(`Fetching details for ${keyVal}...`);
 
-                // Navigate the puppeteer page to the detail URL
-                await page.goto(url, { waitUntil: 'networkidle2' });
+                // Navigate with a slightly longer timeout and wait for network to be truly idle
+                await page.goto(url, { waitUntil: 'networkidle2', timeout: 45000 });
 
                 try {
-                    // Wait for the details table to ensure the page has rendered fully on the CI runner
-                    await page.waitForSelector('#simpleDetailsTable', { timeout: 5000 });
+                    // Wait longer for the table to appear, as York's portal can be slow
+                    await page.waitForSelector('#simpleDetailsTable', { timeout: 15000 });
                 } catch (e) {
-                    console.log(`Warning: #simpleDetailsTable not found for ${keyVal}. Page may not have loaded correctly.`);
+                    console.log(`Warning: #simpleDetailsTable not found for ${keyVal}. Page may not have loaded or session might be invalid.`);
                 }
 
                 const detailHtml = await page.content();
                 const $detail = cheerio.load(detailHtml);
 
-                // Note: Actual fields depending on York's markup structure.
-                const fullDescription = $detail('th:contains("Proposal")').next('td').text().trim() || description;
-                const applicantName = $detail('th:contains("Applicant")').next('td').text().trim() || "Unknown";
-                const reference = $detail('th:contains("Reference")').next('td').text().trim();
-                const applicationReceived = $detail('th:contains("Application Received")').next('td').text().trim();
-                const applicationValidated = $detail('th:contains("Application Validated")').next('td').text().trim();
-                const appStatus = $detail('th:contains("Status")').next('td').text().trim();
+                // Initialize fields
+                let fullDescription = description;
+                let applicantName = "Unknown";
+                let reference = null;
+                let applicationReceived = null;
+                let applicationValidated = null;
+                let appStatus = "Unknown";
+                let decisionText = "";
+                let decisionDateStr = "";
 
-                // Use a very robust selector that finds "Decision" but excludes extra context like Date or Type
-                const decisionHeader = $detail('th').filter((i, el) => {
-                    const t = $detail(el).text().trim().toLowerCase();
-                    // Match "Decision" or "Decision:" but NOT "Decision Date" or "Decision Type"
-                    return t.includes('decision') && !t.includes('date') && !t.includes('type');
-                });
-                const decisionText = decisionHeader.next('td').text().trim();
+                // Iterate through all table rows to find matches regardless of exact header text
+                $detail('#simpleDetailsTable tr, .detailstable tr').each((i, row) => {
+                    const th = $detail(row).find('th').text().trim().toLowerCase();
+                    const td = $detail(row).find('td').text().trim();
 
-                const dateHeader = $detail('th').filter((i, el) => {
-                    const t = $detail(el).text().trim().toLowerCase();
-                    return t.includes('decision') && t.includes('date');
+                    if (th.includes('proposal') || th.includes('description')) fullDescription = td;
+                    if (th.includes('applicant')) applicantName = td;
+                    if (th === 'reference' || th === 'ref. no:') reference = td;
+                    if (th.includes('received')) applicationReceived = td;
+                    if (th.includes('validated')) applicationValidated = td;
+                    if (th === 'status' || th === 'app status') appStatus = td;
+
+                    // Specific logic for Decision to avoid Date/Type headers
+                    if ((th.includes('decision') && !th.includes('date') && !th.includes('type')) || th === 'decision') {
+                        // If we haven't found a better decision, or if this is the primary "Decision" field
+                        if (!decisionText || th === 'decision') {
+                            decisionText = td;
+                        }
+                    }
+                    if (th.includes('decision') && th.includes('date')) decisionDateStr = td;
                 });
-                const decisionDateStr = dateHeader.next('td').text().trim();
 
                 const lowerDecision = decisionText.toLowerCase();
-                // Highly inclusive approval check
+                // Highly inclusive approval check - include everything that implies a positive outcome
                 const isApproved = lowerDecision.includes('approv') ||
                     lowerDecision.includes('grant') ||
                     lowerDecision.includes('permit') ||
-                    lowerDecision.includes('allowed') ||
-                    lowerDecision.includes('acceptable');
+                    lowerDecision.includes('allow') ||
+                    lowerDecision.includes('accept') ||
+                    lowerDecision.includes('lawful') ||
+                    lowerDecision.includes('consent');
 
                 if (!decisionText || !isApproved) {
-                    console.log(`Skipping ${keyVal}: Filtered out. Header: "${decisionHeader.text().trim()}", Value: "${decisionText}"`);
+                    console.log(`Skipping ${keyVal}: Not approved or decision missing. Value: "${decisionText}"`);
                     stats.filtered++;
                     continue;
                 }
