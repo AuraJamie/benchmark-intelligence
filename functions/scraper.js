@@ -6,7 +6,7 @@ import { db } from './admin.js';
 const BASE_URL = 'https://planningaccess.york.gov.uk/online-applications';
 
 export async function runScraper() {
-    const stats = { added: 0, skipped: 0, errors: 0 };
+    const stats = { added: 0, existing: 0, errors: 0, filtered: 0 };
     let browser = null;
 
     try {
@@ -119,7 +119,7 @@ export async function runScraper() {
             const existingDoc = await docRef.get();
 
             if (existingDoc.exists) {
-                stats.skipped++;
+                stats.existing++;
                 continue;
             }
 
@@ -148,15 +148,16 @@ export async function runScraper() {
                 const applicationValidated = $detail('th:contains("Application Validated")').next('td').text().trim();
                 const appStatus = $detail('th:contains("Status")').next('td').text().trim();
 
-                const decisionText = $detail('th:contains("Decision")').first().next('td').text().trim();
-                const decisionDateStr = $detail('th:contains("Decision Issued Date")').next('td').text().trim();
+                // Use exact match for the Decision header to avoid catching "Decision Issued Date"
+                const decisionText = $detail('th').filter((i, el) => $detail(el).text().trim() === 'Decision').next('td').text().trim();
+                const decisionDateStr = $detail('th').filter((i, el) => $detail(el).text().trim() === 'Decision Issued Date').next('td').text().trim();
 
                 const lowerDecision = decisionText.toLowerCase();
                 const isApproved = lowerDecision.includes('approv') || lowerDecision.includes('grant') || lowerDecision.includes('permit');
 
                 if (!decisionText || !isApproved) {
-                    console.log(`Skipping ${keyVal} as decision is not approved. Found decision text: '${decisionText}'`);
-                    stats.skipped++;
+                    console.log(`Skipping ${keyVal} as decision is not approved (or selector failed). Found decision text: '${decisionText}'`);
+                    stats.filtered++;
                     continue;
                 }
 
@@ -219,7 +220,7 @@ export async function runScraper() {
             }
         }
 
-        console.log(`Scrape finished. Added: ${stats.added}, Skipped: ${stats.skipped}, Errors: ${stats.errors}`);
+        console.log(`Scrape finished. Added: ${stats.added}, Existing: ${stats.existing}, Filtered: ${stats.filtered}, Errors: ${stats.errors}`);
 
         // Log stats to Firestore for dashboard reporting
         try {

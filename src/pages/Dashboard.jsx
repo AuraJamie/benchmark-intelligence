@@ -359,7 +359,11 @@ const Dashboard = () => {
                             </div>
                             <div className="bg-white/50 p-2 rounded-md border border-green-100">
                                 <span className="text-gray-500 block text-xs uppercase font-semibold">Existing</span>
-                                <span className="text-lg font-bold text-green-700">{syncReport.skipped}</span>
+                                <span className="text-lg font-bold text-green-700">{syncReport.existing || 0}</span>
+                            </div>
+                            <div className="bg-white/50 p-2 rounded-md border border-green-100">
+                                <span className="text-gray-500 block text-xs uppercase font-semibold">Filtered</span>
+                                <span className="text-lg font-bold text-gray-600">{syncReport.filtered || 0}</span>
                             </div>
                             <div className="bg-white/50 p-2 rounded-md border border-green-100">
                                 <span className="text-gray-500 block text-xs uppercase font-semibold">Errors</span>
