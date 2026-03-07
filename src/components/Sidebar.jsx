@@ -12,7 +12,6 @@ const Sidebar = () => {
 
     const navItems = [
         { label: 'Projects', icon: Home, path: '/' },
-        { label: 'Map View', icon: MapIcon, path: '/map' },
         { label: 'Builders', icon: Users, path: '/builders' },
     ];
 
@@ -33,8 +32,8 @@ const Sidebar = () => {
                             key={item.label}
                             to={item.path}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive
-                                    ? 'bg-blue-50 text-[#0284c7]'
-                                    : 'text-gray-600 hover:bg-gray-100 hover:text-[#0f172a]'
+                                ? 'bg-blue-50 text-[#0284c7]'
+                                : 'text-gray-600 hover:bg-gray-100 hover:text-[#0f172a]'
                                 }`}
                         >
                             <item.icon className={`h-5 w-5 ${isActive ? 'text-[#0284c7]' : 'text-gray-400'}`} />

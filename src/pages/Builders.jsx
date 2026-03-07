@@ -1,4 +1,3 @@
-import Sidebar from '../components/Sidebar';
 import { Search, Plus, Loader2, Network, UserPlus, Phone, Mail, Building, Activity, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { db } from '../firebase';
@@ -94,109 +93,105 @@ const Builders = () => {
     };
 
     return (
-        <div className="flex bg-gray-50 min-h-screen font-sans text-[#0f172a]">
-            <Sidebar />
+        <div className="w-full relative">
+            <header className="mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-semibold tracking-tight">Builders</h1>
+                    <p className="mt-2 text-sm text-gray-500">Manage your network of trusted tradespeople.</p>
+                </div>
+                <button
+                    onClick={() => setIsAdding(true)}
+                    className="flex items-center gap-2 rounded-lg bg-[#0f172a] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-black"
+                >
+                    <UserPlus className="h-4 w-4" />
+                    Add Builder
+                </button>
+            </header>
 
-            <main className="flex-1 p-8 overflow-auto">
-                <header className="mb-8 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-semibold tracking-tight">Builders</h1>
-                        <p className="mt-2 text-sm text-gray-500">Manage your network of trusted tradespeople.</p>
-                    </div>
-                    <button
-                        onClick={() => setIsAdding(true)}
-                        className="flex items-center gap-2 rounded-lg bg-[#0f172a] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-black"
-                    >
-                        <UserPlus className="h-4 w-4" />
-                        Add Builder
-                    </button>
-                </header>
-
-                <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                    <div className="flex items-center gap-4 border-b border-gray-100 p-4">
-                        <div className="relative flex-1 max-w-md">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Search builders..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-4 text-sm focus:border-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#0f172a]"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm text-gray-600">
-                            <thead className="bg-gray-50/50 text-xs uppercase text-gray-500">
-                                <tr>
-                                    <th className="px-6 py-4 font-medium border-b border-gray-200">Company ID</th>
-                                    <th className="px-6 py-4 font-medium border-b border-gray-200">Name & Owner</th>
-                                    <th className="px-6 py-4 font-medium border-b border-gray-200">Contact</th>
-                                    <th className="px-6 py-4 font-medium border-b border-gray-200">Availability</th>
-                                    <th className="px-6 py-4 font-medium border-b border-gray-200 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 bg-white">
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
-                                            <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-gray-400" />
-                                            Loading builders...
-                                        </td>
-                                    </tr>
-                                ) : filteredBuilders.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
-                                            No builders found.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    filteredBuilders.map((builder) => (
-                                        <tr key={builder.id} className="hover:bg-gray-50/50 transition-colors">
-                                            <td className="px-6 py-4 font-mono text-xs font-semibold text-[#0f172a]">
-                                                {builder.companyId}
-                                            </td>
-                                            <td className="px-6 py-4 cursor-pointer" onClick={() => setSelectedBuilder(builder)}>
-                                                <div className="font-medium text-[#0f172a]">{builder.companyName}</div>
-                                                <div className="text-gray-500 flex items-center gap-1 mt-0.5"><UserPlus className="h-3 w-3" /> {builder.ownerName}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2 text-gray-600 mb-1">
-                                                    <Phone className="h-3 w-3" /> {builder.phone}
-                                                </div>
-                                                <div className="flex items-center gap-2 text-gray-600">
-                                                    <Mail className="h-3 w-3" /> {builder.email}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <button
-                                                    onClick={() => toggleAvailability(builder.id, builder.availability)}
-                                                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border ${builder.availability ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100' : 'border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100'}`}
-                                                >
-                                                    {builder.availability ? 'Available' : 'Unavailable'}
-                                                </button>
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <button
-                                                    onClick={() => setSelectedBuilder(builder)}
-                                                    className="text-[#0284c7] hover:text-[#0369a1] font-medium text-sm"
-                                                >
-                                                    View Details
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                <div className="flex items-center gap-4 border-b border-gray-100 p-4">
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search builders..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-4 text-sm focus:border-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#0f172a]"
+                        />
                     </div>
                 </div>
-            </main>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm text-gray-600">
+                        <thead className="bg-gray-50/50 text-xs uppercase text-gray-500">
+                            <tr>
+                                <th className="px-6 py-4 font-medium border-b border-gray-200">Company ID</th>
+                                <th className="px-6 py-4 font-medium border-b border-gray-200">Name & Owner</th>
+                                <th className="px-6 py-4 font-medium border-b border-gray-200">Contact</th>
+                                <th className="px-6 py-4 font-medium border-b border-gray-200">Availability</th>
+                                <th className="px-6 py-4 font-medium border-b border-gray-200 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 bg-white">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
+                                        <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-gray-400" />
+                                        Loading builders...
+                                    </td>
+                                </tr>
+                            ) : filteredBuilders.length === 0 ? (
+                                <tr>
+                                    <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
+                                        No builders found.
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredBuilders.map((builder) => (
+                                    <tr key={builder.id} className="hover:bg-gray-50/50 transition-colors">
+                                        <td className="px-6 py-4 font-mono text-xs font-semibold text-[#0f172a]">
+                                            {builder.companyId}
+                                        </td>
+                                        <td className="px-6 py-4 cursor-pointer" onClick={() => setSelectedBuilder(builder)}>
+                                            <div className="font-medium text-[#0f172a]">{builder.companyName}</div>
+                                            <div className="text-gray-500 flex items-center gap-1 mt-0.5"><UserPlus className="h-3 w-3" /> {builder.ownerName}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2 text-gray-600 mb-1">
+                                                <Phone className="h-3 w-3" /> {builder.phone}
+                                            </div>
+                                            <div className="flex items-center gap-2 text-gray-600">
+                                                <Mail className="h-3 w-3" /> {builder.email}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <button
+                                                onClick={() => toggleAvailability(builder.id, builder.availability)}
+                                                className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border ${builder.availability ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100' : 'border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100'}`}
+                                            >
+                                                {builder.availability ? 'Available' : 'Unavailable'}
+                                            </button>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button
+                                                onClick={() => setSelectedBuilder(builder)}
+                                                className="text-[#0284c7] hover:text-[#0369a1] font-medium text-sm"
+                                            >
+                                                View Details
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
             {/* Add Builder Modal */}
             {isAdding && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-500 bg-opacity-75">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-500 bg-opacity-75">
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
                         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                             <h3 className="text-lg font-semibold text-[#0f172a]">Add New Builder</h3>
@@ -244,10 +239,10 @@ const Builders = () => {
 
             {/* Slide-over Panel for Builder Profile */}
             {selectedBuilder && (
-                <div className="fixed inset-0 z-50 overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+                <div className="fixed inset-0 z-[60] overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
                     <div className="absolute inset-0 overflow-hidden">
                         <div className="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setSelectedBuilder(null)}></div>
-                        <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10 sm:pl-16">
+                        <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full md:pl-10">
                             <div className="pointer-events-auto w-screen max-w-md transform transition-transform">
                                 <div className="flex h-full flex-col overflow-y-scroll bg-white shadow-xl">
                                     <div className="px-4 py-6 sm:px-6 bg-[#0f172a] text-white flex justify-between items-center">

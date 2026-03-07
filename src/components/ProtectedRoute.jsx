@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase';
 import { Loader2 } from 'lucide-react';
+import Layout from './Layout';
 
 const ProtectedRoute = ({ children }) => {
     const [user, setUser] = useState(null);
@@ -29,7 +30,7 @@ const ProtectedRoute = ({ children }) => {
         return <Navigate to="/login" replace />;
     }
 
-    return children;
+    return <Layout>{children}</Layout>;
 };
 
 export default ProtectedRoute;
