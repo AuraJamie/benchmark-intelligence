@@ -22,25 +22,21 @@ export async function runScraper() {
         // Disguise as a regular browser
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
 
-        console.log(`Establishing session via ${BASE_URL}/search.do?action=weeklyList`);
-        await page.goto(`${BASE_URL}/search.do?action=weeklyList`, { waitUntil: 'networkidle2' });
+        console.log(`Establishing session via ${BASE_URL}/search.do?action=monthlyList`);
+        await page.goto(`${BASE_URL}/search.do?action=monthlyList`, { waitUntil: 'networkidle2' });
 
-        console.log("Submitting weekly list search...");
+        console.log("Submitting monthly list search...");
 
         // Wait for the form explicitly
-        const formSelector = 'form[name="searchForm"], form#searchForm, form.search';
-        await page.waitForSelector(formSelector, { timeout: 10000 }).catch(() => console.log('Could not find form specifically by name, trying generic forms...'));
+        const formSelector = 'form[name="searchCriteriaForm"], form#monthlyListForm';
+        await page.waitForSelector(formSelector, { timeout: 10000 });
 
-        // Pre-fill static fields in evaluation
+        // Select the most recent month (usually already selected but being explicit)
         await page.evaluate(() => {
-            const form = document.querySelector('form.search') || document.forms[0];
-            if (!form) return;
-
-            const searchType = document.querySelector('#searchCriteria_searchType') || form.querySelector('select[name*="searchType"]');
-            if (searchType) searchType.value = 'Application';
-
-            const dateListType = document.querySelector('#searchCriteria_dateListType') || form.querySelector('select[name*="dateListType"]');
-            if (dateListType) dateListType.value = 'thisWeek';
+            const monthSelect = document.querySelector('#month');
+            if (monthSelect && monthSelect.options.length > 0) {
+                // We'll keep the default (current/latest month)
+            }
         });
 
         // Use Puppeteer's native click to trigger React/DOM events to guarantee the radio group state updates on CI
@@ -58,7 +54,7 @@ export async function runScraper() {
         await Promise.all([
             page.waitForNavigation({ waitUntil: 'networkidle2' }),
             page.evaluate(() => {
-                const form = document.querySelector('form.search') || document.forms[0];
+                const form = document.querySelector('form#monthlyListForm') || document.forms[0];
                 const submitBtn = form.querySelector('input.button.primary') || form.querySelector('input[type="submit"]');
                 if (submitBtn) {
                     submitBtn.click();
@@ -224,6 +220,19 @@ export async function runScraper() {
         }
 
         console.log(`Scrape finished. Added: ${stats.added}, Skipped: ${stats.skipped}, Errors: ${stats.errors}`);
+
+        // Log stats to Firestore for dashboard reporting
+        try {
+            await db.collection('scraper_logs').add({
+                ...stats,
+                totalFound: extensionApps.length,
+                timestamp: new Date(),
+                status: 'completed'
+            });
+        } catch (logErr) {
+            console.error("Failed to log stats to Firestore:", logErr);
+        }
+
         return stats;
 
     } catch (error) {

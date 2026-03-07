@@ -2,7 +2,7 @@ import { useLocation } from 'react-router-dom';
 import { Search, Filter, Loader2, Link, MapPin, ExternalLink, X, Save, Map as MapIcon, List, Users, CheckCircle2, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, where, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, where, getDocs, writeBatch, limit } from 'firebase/firestore';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -33,7 +33,8 @@ const Dashboard = () => {
     }, [location.pathname]);
 
     const [syncing, setSyncing] = useState(false);
-    const [syncStatus, setSyncStatus] = useState(null); // null | 'success' | 'error'
+    const [syncStatus, setSyncStatus] = useState(null); // null | 'success' | 'error' | 'waiting'
+    const [syncReport, setSyncReport] = useState(null); // { added, skipped, errors, totalFound }
     const [builders, setBuilders] = useState([]);
     const [projectAssignments, setProjectAssignments] = useState([]);
     const [selectedBuilderToAssign, setSelectedBuilderToAssign] = useState('');
@@ -182,7 +183,11 @@ const Dashboard = () => {
         const repo = 'benchmark-intelligence';
 
         setSyncing(true);
-        setSyncStatus(null);
+        setSyncStatus('waiting');
+        setSyncReport(null);
+
+        // Record the time we started the sync to find the log entry generated after this
+        const syncStartTime = Date.now();
 
         try {
             const response = await fetch(
@@ -199,24 +204,55 @@ const Dashboard = () => {
             );
 
             if (response.status === 204) {
-                setSyncStatus('success');
-                setTimeout(() => setSyncStatus(null), 5000);
+                // Success triggering. Now listen for the log document.
+                const q = query(
+                    collection(db, 'scraper_logs'),
+                    orderBy('timestamp', 'desc'),
+                    limit(1)
+                );
+
+                const unsubscribe = onSnapshot(q, (snapshot) => {
+                    if (!snapshot.empty) {
+                        const logData = snapshot.docs[0].data();
+                        const logTime = logData.timestamp.toMillis();
+
+                        // If the log is newer than our sync start, it's the result we want
+                        if (logTime > syncStartTime) {
+                            setSyncReport(logData);
+                            setSyncStatus('success');
+                            setSyncing(false);
+                            unsubscribe(); // Stop listening
+                            // Clear status after 10 seconds
+                            setTimeout(() => {
+                                setSyncStatus(null);
+                                setSyncReport(null);
+                            }, 15000);
+                        }
+                    }
+                });
+
+                // Fail-safe: if no log appears in 2 minutes, stop waiting
+                setTimeout(() => {
+                    unsubscribe();
+                    if (syncing) {
+                        setSyncing(false);
+                        setSyncStatus('error');
+                    }
+                }, 120000);
+
             } else {
                 const err = await response.json();
                 console.error('GitHub Actions error:', err);
                 if (err.message === 'Bad credentials') {
-                    // Token is invalid, clear it so they are prompted next time
                     localStorage.removeItem('github_sync_token');
                     alert("Invalid GitHub Token. Please generate a new one at https://github.com/settings/tokens/new with the 'workflow' scope and try again.");
                 }
                 setSyncStatus('error');
-                setTimeout(() => setSyncStatus(null), 5000);
+                setSyncing(false);
             }
         } catch (error) {
             console.error('Sync failed:', error);
             setSyncStatus('error');
-            setTimeout(() => setSyncStatus(null), 5000);
-        } finally {
             setSyncing(false);
         }
     };
@@ -284,22 +320,49 @@ const Dashboard = () => {
                         <button
                             onClick={triggerSync}
                             disabled={syncing}
-                            className="flex justify-center items-center gap-2 rounded-lg bg-[#0f172a] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-black focus:outline-none focus:ring-2 focus:ring-[#0f172a] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed w-full md:w-auto"
+                            className="flex justify-center items-center gap-2 rounded-lg bg-[#0f172a] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-black focus:outline-none focus:ring-2 focus:ring-[#0f172a] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed w-full md:w-auto min-w-[140px]"
                         >
                             <Loader2 className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-                            {syncing ? 'Triggering...' : 'Sync Now'}
+                            {syncing ? (syncStatus === 'waiting' ? 'Synchronizing...' : 'Triggering...') : 'Sync Data'}
                         </button>
                     </div>
                 </header>
 
-                {syncStatus === 'success' && (
-                    <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-                        ✓ Scraper job triggered successfully on GitHub Actions! New data will appear in a few minutes.
+                {syncStatus === 'success' && syncReport && (
+                    <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-6 py-4 shadow-sm">
+                        <div className="flex items-center gap-3 mb-2">
+                            <CheckCircle2 className="h-5 w-5 text-green-600" />
+                            <h3 className="text-sm font-bold text-green-900">Sync Complete</h3>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div className="bg-white/50 p-2 rounded-md border border-green-100">
+                                <span className="text-gray-500 block text-xs uppercase font-semibold">Total Found</span>
+                                <span className="text-lg font-bold text-green-700">{syncReport.totalFound}</span>
+                            </div>
+                            <div className="bg-white/50 p-2 rounded-md border border-green-100">
+                                <span className="text-gray-500 block text-xs uppercase font-semibold">Added</span>
+                                <span className="text-lg font-bold text-green-700">{syncReport.added}</span>
+                            </div>
+                            <div className="bg-white/50 p-2 rounded-md border border-green-100">
+                                <span className="text-gray-500 block text-xs uppercase font-semibold">Existing</span>
+                                <span className="text-lg font-bold text-green-700">{syncReport.skipped}</span>
+                            </div>
+                            <div className="bg-white/50 p-2 rounded-md border border-green-100">
+                                <span className="text-gray-500 block text-xs uppercase font-semibold">Errors</span>
+                                <span className="text-lg font-bold text-red-600">{syncReport.errors}</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {syncStatus === 'waiting' && syncing && (
+                    <div className="mb-6 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800 flex items-center gap-3">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>The scraper is currently running on GitHub. This usually takes 1-2 minutes. Results will appear here automatically...</span>
                     </div>
                 )}
                 {syncStatus === 'error' && (
                     <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                        ✗ Failed to trigger the scraper. Check your VITE_GITHUB_TOKEN in the .env file.
+                        ✗ Sync failed or timed out. Please check your GitHub token and repository actions status.
                     </div>
                 )}
 
