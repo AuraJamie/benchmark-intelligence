@@ -31,33 +31,42 @@ export async function runScraper() {
         const formSelector = 'form[name="searchForm"], form#searchForm, form.search';
         await page.waitForSelector(formSelector, { timeout: 10000 }).catch(() => console.log('Could not find form specifically by name, trying generic forms...'));
 
-        // We evaluate and submit the form directly in the browser context
+        // Pre-fill static fields in evaluation
         await page.evaluate(() => {
             const form = document.querySelector('form.search') || document.forms[0];
             if (!form) return;
 
-            // These exact names/IDs might vary slightly on IDONOX systems depending on the council 
-            // but the general structure remains:
             const searchType = document.querySelector('#searchCriteria_searchType') || form.querySelector('select[name*="searchType"]');
             if (searchType) searchType.value = 'Application';
 
-            // Click the 'Decided' radio button explicitly if it exists
-            const dateDecidedRadio = form.querySelector('input[name="dateType"][value="DC_Decided"]') || document.querySelector('#dateDecided');
-            if (dateDecidedRadio) dateDecidedRadio.checked = true;
-
             const dateListType = document.querySelector('#searchCriteria_dateListType') || form.querySelector('select[name*="dateListType"]');
             if (dateListType) dateListType.value = 'thisWeek';
-
-            const submitBtn = form.querySelector('input.button.primary') || form.querySelector('input[type="submit"]');
-            if (submitBtn) {
-                submitBtn.click();
-            } else {
-                form.submit();
-            }
         });
 
-        // wait for the results page to be loaded
-        await page.waitForNavigation({ waitUntil: 'networkidle2' });
+        // Use Puppeteer's native click to trigger React/DOM events to guarantee the radio group state updates on CI
+        try {
+            const radioSelector = 'input[name="dateType"][value="DC_Decided"]';
+            await page.waitForSelector(radioSelector, { timeout: 5000 });
+            await page.click(radioSelector);
+            // wait a tiny bit for UI state
+            await new Promise(r => setTimeout(r, 500));
+        } catch (e) {
+            console.log('Warning: could not click DC_Decided radio natively.');
+        }
+
+        // Submit form and wait for the results page to load
+        await Promise.all([
+            page.waitForNavigation({ waitUntil: 'networkidle2' }),
+            page.evaluate(() => {
+                const form = document.querySelector('form.search') || document.forms[0];
+                const submitBtn = form.querySelector('input.button.primary') || form.querySelector('input[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.click();
+                } else {
+                    form.submit();
+                }
+            })
+        ]);
 
         let hasNextPage = false;
         let pageNum = 1;
@@ -124,6 +133,14 @@ export async function runScraper() {
 
                 // Navigate the puppeteer page to the detail URL
                 await page.goto(url, { waitUntil: 'networkidle2' });
+
+                try {
+                    // Wait for the details table to ensure the page has rendered fully on the CI runner
+                    await page.waitForSelector('#simpleDetailsTable', { timeout: 5000 });
+                } catch (e) {
+                    console.log(`Warning: #simpleDetailsTable not found for ${keyVal}. Page may not have loaded correctly.`);
+                }
+
                 const detailHtml = await page.content();
                 const $detail = cheerio.load(detailHtml);
 
@@ -134,8 +151,11 @@ export async function runScraper() {
                 const decisionText = $detail('th:contains("Decision")').next('td').text().trim();
                 const decisionDateStr = $detail('th:contains("Decision Issued Date")').next('td').text().trim();
 
-                if (!decisionText || !decisionText.toLowerCase().includes('approv')) {
-                    console.log(`Skipping ${keyVal} as decision is not approved: '${decisionText}'`);
+                const lowerDecision = decisionText.toLowerCase();
+                const isApproved = lowerDecision.includes('approv') || lowerDecision.includes('grant') || lowerDecision.includes('permit');
+
+                if (!decisionText || !isApproved) {
+                    console.log(`Skipping ${keyVal} as decision is not approved. Found decision text: '${decisionText}'`);
                     stats.skipped++;
                     continue;
                 }
