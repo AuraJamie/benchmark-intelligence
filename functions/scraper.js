@@ -8,22 +8,28 @@ const CONCURRENT_PAGES = 3; // Fetch up to 3 detail pages simultaneously
 
 /**
  * Extracts all fields from a detail page's #simpleDetailsTable.
+ * Merges rows from multiple tab pages (e.g. summary + further-info).
  */
-function parseDetailPage(html) {
-    const $ = cheerio.load(html);
+function parseDetailPages(htmlList) {
     const fields = {};
 
-    const rows = $('#simpleDetailsTable tr');
-    console.log(`    Table rows found: ${rows.length}`);
+    for (const html of htmlList) {
+        const $ = cheerio.load(html);
+        const rows = $('#simpleDetailsTable tr');
+        console.log(`    Table rows found: ${rows.length}`);
 
-    rows.each((i, row) => {
-        const th = $(row).find('th').text().replace(/\s+/g, ' ').trim().toLowerCase();
-        const td = $(row).find('td').text().replace(/\s+/g, ' ').trim();
-        if (th && td) {
-            fields[th] = td;
-            console.log(`    [${i}] "${th}" => "${td.substring(0, 60)}"`);
-        }
-    });
+        rows.each((i, row) => {
+            const th = $(row).find('th').text().replace(/\s+/g, ' ').trim().toLowerCase();
+            const td = $(row).find('td').text().replace(/\s+/g, ' ').trim();
+            if (th && td) {
+                // Don't overwrite already-found non-empty values
+                if (!fields[th]) {
+                    fields[th] = td;
+                    console.log(`    "${th}" => "${td.substring(0, 60)}"`);
+                }
+            }
+        });
+    }
 
     // Use decision text as status when portal shows a generic/blank status
     const rawStatus = fields['status'] || null;
@@ -132,10 +138,15 @@ export async function runScraper() {
         console.log(`Found ${extensionApps.length} extension applications in total.`);
 
         // --- PHASE 3: Open concurrent browser tabs for fast detail page fetching ---
+        // Copy session cookies from mainPage so all tabs share the authenticated session
+        const sessionCookies = await mainPage.cookies();
         const tabs = [];
         for (let i = 0; i < CONCURRENT_PAGES; i++) {
             const tab = await browser.newPage();
             await tab.setUserAgent(UA);
+            if (sessionCookies.length > 0) {
+                await tab.setCookie(...sessionCookies);
+            }
             tabs.push(tab);
         }
 
@@ -147,9 +158,15 @@ export async function runScraper() {
             const docRef = db.collection('projects').doc(keyVal);
 
             try {
-                console.log(`[${keyVal}] Fetching detail page...`);
-                const detailHtml = await fetchDetailWithPage(tab, url);
-                const parsed = parseDetailPage(detailHtml);
+                console.log(`[${keyVal}] Fetching summary tab...`);
+                const summaryHtml = await fetchDetailWithPage(tab, url);
+
+                // Also fetch the "Further Information" tab which contains applicant name
+                const detailsUrl = url.replace('activeTab=summary', 'activeTab=details');
+                console.log(`[${keyVal}] Fetching further-info tab...`);
+                const furtherInfoHtml = await fetchDetailWithPage(tab, detailsUrl);
+
+                const parsed = parseDetailPages([summaryHtml, furtherInfoHtml]);
 
                 const fullDescription = parsed.fullDescription || description;
                 const applicantName = parsed.applicantName || 'Unknown';
