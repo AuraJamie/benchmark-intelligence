@@ -1,8 +1,8 @@
 import Sidebar from '../components/Sidebar';
-import { Search, Filter, Loader2, Link, MapPin, ExternalLink, X, Save, Map as MapIcon, List } from 'lucide-react';
+import { Search, Filter, Loader2, Link, MapPin, ExternalLink, X, Save, Map as MapIcon, List, Users, CheckCircle2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, where, getDocs, writeBatch } from 'firebase/firestore';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -25,6 +25,13 @@ const Dashboard = () => {
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
     const [syncing, setSyncing] = useState(false);
     const [syncStatus, setSyncStatus] = useState(null); // null | 'success' | 'error'
+    const [builders, setBuilders] = useState([]);
+    const [projectAssignments, setProjectAssignments] = useState([]);
+    const [selectedBuilderToAssign, setSelectedBuilderToAssign] = useState('');
+
+    // Multi-select and collections logic
+    const [selectedRowIds, setSelectedRowIds] = useState([]);
+    const [batchCollectionName, setBatchCollectionName] = useState('');
 
     useEffect(() => {
         const q = query(collection(db, 'projects'), orderBy('timestamp', 'desc'));
@@ -40,10 +47,41 @@ const Dashboard = () => {
         return () => unsubscribe();
     }, []);
 
-    const filteredProjects = projects.filter(p =>
-        p.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // Fetch all builders for assignments
+    useEffect(() => {
+        const q = query(collection(db, 'builders'), orderBy('companyName', 'asc'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const builderData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+            setBuilders(builderData);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    // Fetch assignments when a project is selected
+    useEffect(() => {
+        if (!selectedProject) {
+            setProjectAssignments([]);
+            return;
+        }
+
+        const q = query(collection(db, 'assignments'), where('projectId', '==', selectedProject.id));
+        const unsubscribe = onSnapshot(q, async (snapshot) => {
+            const assignmentData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+
+            // Map assignment to builder details for display
+            // For real-time complexity we might just fetch straight, but let's map it since builders list is already in memory
+            setProjectAssignments(assignmentData);
+        });
+
+        return () => unsubscribe();
+    }, [selectedProject]);
+
+    const filteredProjects = projects.filter(p => {
+        const matchesSearch = p.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.collectionId?.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesSearch;
+    });
 
     const openProject = (project) => {
         setSelectedProject(project);
@@ -63,6 +101,30 @@ const Dashboard = () => {
         } catch (error) {
             console.error("Error updating project:", error);
             alert("Failed to save project details.");
+        }
+    };
+
+    const assignLead = async () => {
+        if (!selectedProject || !selectedBuilderToAssign) return;
+
+        // Prevent duplicate assignments
+        if (projectAssignments.some(assign => assign.builderId === selectedBuilderToAssign)) {
+            alert("This project is already assigned to that builder.");
+            return;
+        }
+
+        try {
+            await addDoc(collection(db, 'assignments'), {
+                projectId: selectedProject.id,
+                builderId: selectedBuilderToAssign,
+                dateAssigned: serverTimestamp(),
+                status: 'Pending'
+            });
+            setSelectedBuilderToAssign('');
+            setEditStatus('Assigned'); // Auto-update status
+        } catch (error) {
+            console.error("Error assigning lead:", error);
+            alert("Failed to assign lead.");
         }
     };
 
@@ -115,6 +177,43 @@ const Dashboard = () => {
             setTimeout(() => setSyncStatus(null), 5000);
         } finally {
             setSyncing(false);
+        }
+    };
+
+    const toggleRowSelect = (e, id) => {
+        e.stopPropagation();
+        if (selectedRowIds.includes(id)) {
+            setSelectedRowIds(selectedRowIds.filter(rowId => rowId !== id));
+        } else {
+            setSelectedRowIds([...selectedRowIds, id]);
+        }
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedRowIds.length === filteredProjects.length) {
+            setSelectedRowIds([]);
+        } else {
+            setSelectedRowIds(filteredProjects.map(p => p.id));
+        }
+    };
+
+    const applyCollectionToSelected = async () => {
+        if (!batchCollectionName.trim() || selectedRowIds.length === 0) return;
+
+        try {
+            const batch = writeBatch(db);
+            selectedRowIds.forEach(id => {
+                const projectRef = doc(db, 'projects', id);
+                batch.update(projectRef, { collectionId: batchCollectionName.trim() });
+            });
+            await batch.commit();
+
+            setSelectedRowIds([]);
+            setBatchCollectionName('');
+            alert('Collection assigned to selected projects.');
+        } catch (error) {
+            console.error('Error batch updating collections:', error);
+            alert('Failed to update collections.');
         }
     };
 
@@ -183,12 +282,42 @@ const Dashboard = () => {
                         </button>
                     </div>
 
+                    {selectedRowIds.length > 0 && viewMode === 'list' && (
+                        <div className="bg-[#0f172a]/5 border-b border-gray-200 p-3 flex items-center justify-between">
+                            <span className="text-sm font-medium text-[#0f172a]">{selectedRowIds.length} project(s) selected</span>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    placeholder="Collection Name..."
+                                    className="rounded-md border border-gray-300 py-1.5 px-3 text-sm focus:border-[#0f172a] focus:outline-none"
+                                    value={batchCollectionName}
+                                    onChange={(e) => setBatchCollectionName(e.target.value)}
+                                />
+                                <button
+                                    onClick={applyCollectionToSelected}
+                                    disabled={!batchCollectionName.trim()}
+                                    className="rounded-md bg-[#0f172a] px-3 py-1.5 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                                >
+                                    Add to Collection
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="overflow-x-auto">
                         {viewMode === 'list' ? (
                             <table className="w-full text-left text-sm text-gray-600">
                                 <thead className="bg-gray-50/50 text-xs uppercase text-gray-500">
                                     <tr>
-                                        <th className="px-6 py-4 font-medium border-b border-gray-200">Address</th>
+                                        <th className="px-6 py-4 font-medium border-b border-gray-200 w-12 text-center">
+                                            <input
+                                                type="checkbox"
+                                                className="rounded border-gray-300 text-[#0f172a] focus:ring-[#0f172a]"
+                                                checked={filteredProjects.length > 0 && selectedRowIds.length === filteredProjects.length}
+                                                onChange={toggleSelectAll}
+                                            />
+                                        </th>
+                                        <th className="px-6 py-4 font-medium border-b border-gray-200">Address / Collection</th>
                                         <th className="px-6 py-4 font-medium border-b border-gray-200">Description</th>
                                         <th className="px-6 py-4 font-medium border-b border-gray-200">Status</th>
                                         <th className="px-6 py-4 font-medium border-b border-gray-200">Decided</th>
@@ -197,21 +326,36 @@ const Dashboard = () => {
                                 <tbody className="divide-y divide-gray-100 bg-white">
                                     {loading ? (
                                         <tr>
-                                            <td colSpan="4" className="px-6 py-8 text-center text-sm text-gray-500">
+                                            <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
                                                 <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-gray-400" />
                                                 Loading projects...
                                             </td>
                                         </tr>
                                     ) : filteredProjects.length === 0 ? (
                                         <tr>
-                                            <td colSpan="4" className="px-6 py-8 text-center text-sm text-gray-500">
+                                            <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
                                                 No projects found matching your criteria.
                                             </td>
                                         </tr>
                                     ) : (
                                         filteredProjects.map((project) => (
-                                            <tr key={project.id} onClick={() => openProject(project)} className="hover:bg-gray-50/50 cursor-pointer transition-colors">
-                                                <td className="px-6 py-4 font-medium text-[#0f172a]">{project.address}</td>
+                                            <tr key={project.id} onClick={() => openProject(project)} className={`hover:bg-gray-50/50 cursor-pointer transition-colors ${selectedRowIds.includes(project.id) ? 'bg-blue-50/30' : ''}`}>
+                                                <td className="px-6 py-4 text-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="rounded border-gray-300 text-[#0f172a] focus:ring-[#0f172a]"
+                                                        checked={selectedRowIds.includes(project.id)}
+                                                        onChange={(e) => toggleRowSelect(e, project.id)}
+                                                    />
+                                                </td>
+                                                <td className="px-6 py-4 font-medium text-[#0f172a]">
+                                                    {project.address}
+                                                    {project.collectionId && (
+                                                        <div className="text-xs text-blue-600 font-normal mt-1 flex items-center gap-1">
+                                                            <Filter className="h-3 w-3" /> {project.collectionId}
+                                                        </div>
+                                                    )}
+                                                </td>
                                                 <td className="px-6 py-4 truncate max-w-xs" title={project.description}>
                                                     {project.description}
                                                 </td>
@@ -253,6 +397,7 @@ const Dashboard = () => {
                                                 <Popup>
                                                     <div className="p-1 space-y-1">
                                                         <p className="font-bold text-sm text-[#0f172a]">{project.address}</p>
+                                                        {project.collectionId && <p className="text-xs text-blue-600 font-medium">{project.collectionId}</p>}
                                                         <p className="text-xs text-gray-600 line-clamp-2">{project.description}</p>
                                                         <p className="text-xs font-semibold mt-1">Status: {project.status}</p>
                                                     </div>
@@ -341,6 +486,55 @@ const Dashboard = () => {
                                                     placeholder="Add important notes here..."
                                                 />
                                             </div>
+                                        </div>
+
+                                        <hr className="border-gray-200" />
+
+                                        <div>
+                                            <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2 mb-3">
+                                                <Users className="h-4 w-4 text-gray-500" />
+                                                Assign Leads
+                                            </h3>
+
+                                            <div className="flex gap-2">
+                                                <select
+                                                    value={selectedBuilderToAssign}
+                                                    onChange={(e) => setSelectedBuilderToAssign(e.target.value)}
+                                                    className="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-[#0f172a] focus:outline-none focus:ring-[#0f172a] sm:text-sm border"
+                                                >
+                                                    <option value="" disabled>Select a builder...</option>
+                                                    {builders.filter(b => b.availability).map(b => (
+                                                        <option key={b.id} value={b.id}>{b.companyName} ({b.companyId})</option>
+                                                    ))}
+                                                </select>
+                                                <button
+                                                    type="button"
+                                                    onClick={assignLead}
+                                                    disabled={!selectedBuilderToAssign}
+                                                    className="inline-flex justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50"
+                                                >
+                                                    Assign
+                                                </button>
+                                            </div>
+
+                                            {projectAssignments.length > 0 && (
+                                                <div className="mt-4">
+                                                    <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Currently Assigned</h4>
+                                                    <ul className="space-y-2">
+                                                        {projectAssignments.map(assignment => {
+                                                            const bData = builders.find(b => b.id === assignment.builderId);
+                                                            return (
+                                                                <li key={assignment.id} className="text-sm flex justify-between items-center bg-gray-50 p-2 rounded-md border border-gray-100">
+                                                                    <span>{bData ? bData.companyName : 'Unknown Builder'}</span>
+                                                                    <span className={`text-xs font-medium ${assignment.status === 'Accepted' ? 'text-green-600' : 'text-gray-500'}`}>
+                                                                        {assignment.status}
+                                                                    </span>
+                                                                </li>
+                                                            );
+                                                        })}
+                                                    </ul>
+                                                </div>
+                                            )}
                                         </div>
 
                                     </div>

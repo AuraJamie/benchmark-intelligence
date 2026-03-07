@@ -1,0 +1,317 @@
+﻿2026-03-07T14:50:46.2916523Z Current runner version: '2.332.0'
+2026-03-07T14:50:46.2942268Z ##[group]Runner Image Provisioner
+2026-03-07T14:50:46.2943317Z Hosted Compute Agent
+2026-03-07T14:50:46.2944318Z Version: 20260213.493
+2026-03-07T14:50:46.2945360Z Commit: 5c115507f6dd24b8de37d8bbe0bb4509d0cc0fa3
+2026-03-07T14:50:46.2946828Z Build Date: 2026-02-13T00:28:41Z
+2026-03-07T14:50:46.2947924Z Worker ID: ***1cf0dec9-bc62-4ffe-9024-7bcf66384033***
+2026-03-07T14:50:46.2949033Z Azure Region: eastus2
+2026-03-07T14:50:46.2949836Z ##[endgroup]
+2026-03-07T14:50:46.2952241Z ##[group]Operating System
+2026-03-07T14:50:46.2953104Z Ubuntu
+2026-03-07T14:50:46.2953885Z 24.04.3
+2026-03-07T14:50:46.2954798Z LTS
+2026-03-07T14:50:46.2955586Z ##[endgroup]
+2026-03-07T14:50:46.2956331Z ##[group]Runner Image
+2026-03-07T14:50:46.2957195Z Image: ubuntu-24.04
+2026-03-07T14:50:46.2957996Z Version: 20260302.42.1
+2026-03-07T14:50:46.2959564Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260302.42/images/ubuntu/Ubuntu2404-Readme.md
+2026-03-07T14:50:46.2961430Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260302.42
+2026-03-07T14:50:46.2962617Z ##[endgroup]
+2026-03-07T14:50:46.2964199Z ##[group]GITHUB_TOKEN Permissions
+2026-03-07T14:50:46.2967400Z Contents: read
+2026-03-07T14:50:46.2968421Z Metadata: read
+2026-03-07T14:50:46.2969211Z Packages: read
+2026-03-07T14:50:46.2969949Z ##[endgroup]
+2026-03-07T14:50:46.2972207Z Secret source: Actions
+2026-03-07T14:50:46.2973176Z Prepare workflow directory
+2026-03-07T14:50:46.3295146Z Prepare all required actions
+2026-03-07T14:50:46.3332194Z Getting action download info
+2026-03-07T14:50:46.6445429Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2026-03-07T14:50:46.8303824Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-03-07T14:50:47.0225662Z Complete job name: scrape
+2026-03-07T14:50:47.0934345Z ##[group]Run actions/checkout@v4
+2026-03-07T14:50:47.0935643Z with:
+2026-03-07T14:50:47.0936286Z   repository: AuraJamie/benchmark-intelligence
+2026-03-07T14:50:47.0937180Z   token: ***
+2026-03-07T14:50:47.0937729Z   ssh-strict: true
+2026-03-07T14:50:47.0938297Z   ssh-user: git
+2026-03-07T14:50:47.0938860Z   persist-credentials: true
+2026-03-07T14:50:47.0939461Z   clean: true
+2026-03-07T14:50:47.0940021Z   sparse-checkout-cone-mode: true
+2026-03-07T14:50:47.0940662Z   fetch-depth: 1
+2026-03-07T14:50:47.0941220Z   fetch-tags: false
+2026-03-07T14:50:47.0941792Z   show-progress: true
+2026-03-07T14:50:47.0942370Z   lfs: false
+2026-03-07T14:50:47.0942897Z   submodules: false
+2026-03-07T14:50:47.0943467Z   set-safe-directory: true
+2026-03-07T14:50:47.0944276Z ##[endgroup]
+2026-03-07T14:50:47.2042792Z Syncing repository: AuraJamie/benchmark-intelligence
+2026-03-07T14:50:47.2045255Z ##[group]Getting Git version info
+2026-03-07T14:50:47.2046376Z Working directory is '/home/runner/work/benchmark-intelligence/benchmark-intelligence'
+2026-03-07T14:50:47.2047753Z [command]/usr/bin/git version
+2026-03-07T14:50:47.2133449Z git version 2.53.0
+2026-03-07T14:50:47.2159714Z ##[endgroup]
+2026-03-07T14:50:47.2174136Z Temporarily overriding HOME='/home/runner/work/_temp/7fa7b2c0-d7c1-4e3a-9583-ed88609e5e56' before making global git config changes
+2026-03-07T14:50:47.2175835Z Adding repository directory to the temporary git global config as a safe directory
+2026-03-07T14:50:47.2187183Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/benchmark-intelligence/benchmark-intelligence
+2026-03-07T14:50:47.2227154Z Deleting the contents of '/home/runner/work/benchmark-intelligence/benchmark-intelligence'
+2026-03-07T14:50:47.2230641Z ##[group]Initializing the repository
+2026-03-07T14:50:47.2234849Z [command]/usr/bin/git init /home/runner/work/benchmark-intelligence/benchmark-intelligence
+2026-03-07T14:50:47.2348871Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-03-07T14:50:47.2350365Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-03-07T14:50:47.2351730Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-03-07T14:50:47.2353303Z hint: call:
+2026-03-07T14:50:47.2354100Z hint:
+2026-03-07T14:50:47.2355423Z hint: 	git config --global init.defaultBranch <name>
+2026-03-07T14:50:47.2356747Z hint:
+2026-03-07T14:50:47.2358009Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-03-07T14:50:47.2359961Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-03-07T14:50:47.2361550Z hint:
+2026-03-07T14:50:47.2362444Z hint: 	git branch -m <name>
+2026-03-07T14:50:47.2363432Z hint:
+2026-03-07T14:50:47.2364965Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-03-07T14:50:47.2367402Z Initialized empty Git repository in /home/runner/work/benchmark-intelligence/benchmark-intelligence/.git/
+2026-03-07T14:50:47.2371028Z [command]/usr/bin/git remote add origin https://github.com/AuraJamie/benchmark-intelligence
+2026-03-07T14:50:47.2404955Z ##[endgroup]
+2026-03-07T14:50:47.2406542Z ##[group]Disabling automatic garbage collection
+2026-03-07T14:50:47.2410018Z [command]/usr/bin/git config --local gc.auto 0
+2026-03-07T14:50:47.2440185Z ##[endgroup]
+2026-03-07T14:50:47.2441802Z ##[group]Setting up auth
+2026-03-07T14:50:47.2448063Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-03-07T14:50:47.2480695Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-03-07T14:50:47.2871108Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-03-07T14:50:47.2907735Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-03-07T14:50:47.3165554Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-03-07T14:50:47.3198721Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-03-07T14:50:47.3477727Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-03-07T14:50:47.3514625Z ##[endgroup]
+2026-03-07T14:50:47.3516272Z ##[group]Fetching the repository
+2026-03-07T14:50:47.3524873Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +31cbb449ba9272aa87d4c36eb0c5bfd00c7a5116:refs/remotes/origin/main
+2026-03-07T14:50:47.5412320Z From https://github.com/AuraJamie/benchmark-intelligence
+2026-03-07T14:50:47.5413426Z  * [new ref]         31cbb449ba9272aa87d4c36eb0c5bfd00c7a5116 -> origin/main
+2026-03-07T14:50:47.5448889Z ##[endgroup]
+2026-03-07T14:50:47.5450352Z ##[group]Determining the checkout info
+2026-03-07T14:50:47.5451938Z ##[endgroup]
+2026-03-07T14:50:47.5456185Z [command]/usr/bin/git sparse-checkout disable
+2026-03-07T14:50:47.5499699Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-03-07T14:50:47.5527113Z ##[group]Checking out the ref
+2026-03-07T14:50:47.5530818Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-03-07T14:50:47.5619130Z Switched to a new branch 'main'
+2026-03-07T14:50:47.5622305Z branch 'main' set up to track 'origin/main'.
+2026-03-07T14:50:47.5629794Z ##[endgroup]
+2026-03-07T14:50:47.5663940Z [command]/usr/bin/git log -1 --format=%H
+2026-03-07T14:50:47.5687392Z 31cbb449ba9272aa87d4c36eb0c5bfd00c7a5116
+2026-03-07T14:50:47.6009022Z ##[group]Run actions/setup-node@v4
+2026-03-07T14:50:47.6009739Z with:
+2026-03-07T14:50:47.6010275Z   node-version: 20
+2026-03-07T14:50:47.6010852Z   cache: npm
+2026-03-07T14:50:47.6011504Z   cache-dependency-path: ./functions/package-lock.json
+2026-03-07T14:50:47.6012265Z   always-auth: false
+2026-03-07T14:50:47.6013075Z   check-latest: false
+2026-03-07T14:50:47.6014079Z   token: ***
+2026-03-07T14:50:47.6014771Z ##[endgroup]
+2026-03-07T14:50:47.7781091Z Found in cache @ /opt/hostedtoolcache/node/20.20.0/x64
+2026-03-07T14:50:47.7788731Z ##[group]Environment details
+2026-03-07T14:50:48.1382728Z node: v20.20.0
+2026-03-07T14:50:48.1383696Z npm: 10.8.2
+2026-03-07T14:50:48.1384675Z yarn: 1.22.22
+2026-03-07T14:50:48.1385890Z ##[endgroup]
+2026-03-07T14:50:48.1407885Z [command]/opt/hostedtoolcache/node/20.20.0/x64/bin/npm config get cache
+2026-03-07T14:50:48.2632956Z /home/runner/.npm
+2026-03-07T14:50:48.3684010Z Cache hit for: node-cache-Linux-x64-npm-b9aa7d2c8fc4d9d21974cb524b27997d23ea9b0d5d94be63da0472c69c39b6f0
+2026-03-07T14:50:48.6863890Z Received 31489885 of 31489885 (100.0%), 108.8 MBs/sec
+2026-03-07T14:50:48.6865546Z Cache Size: ~30 MB (31489885 B)
+2026-03-07T14:50:48.6895774Z [command]/usr/bin/tar -xf /home/runner/work/_temp/d53017ba-7b17-41ff-9a9a-278d51bc9b6f/cache.tzst -P -C /home/runner/work/benchmark-intelligence/benchmark-intelligence --use-compress-program unzstd
+2026-03-07T14:50:48.8617016Z Cache restored successfully
+2026-03-07T14:50:48.8686270Z Cache restored from key: node-cache-Linux-x64-npm-b9aa7d2c8fc4d9d21974cb524b27997d23ea9b0d5d94be63da0472c69c39b6f0
+2026-03-07T14:50:48.8873345Z ##[group]Run npm ci
+2026-03-07T14:50:48.8873777Z [36;1mnpm ci[0m
+2026-03-07T14:50:48.8936946Z shell: /usr/bin/bash -e ***0***
+2026-03-07T14:50:48.8937374Z ##[endgroup]
+2026-03-07T14:50:51.4875263Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2026-03-07T14:50:51.5880769Z npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+2026-03-07T14:50:51.6963548Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-03-07T14:50:52.0337823Z npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+2026-03-07T14:50:52.3915265Z npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-03-07T14:50:59.6493247Z 
+2026-03-07T14:50:59.6494263Z added 661 packages, and audited 662 packages in 11s
+2026-03-07T14:50:59.6495092Z 
+2026-03-07T14:50:59.6495554Z 103 packages are looking for funding
+2026-03-07T14:50:59.6496256Z   run `npm fund` for details
+2026-03-07T14:50:59.6580389Z 
+2026-03-07T14:50:59.6581029Z 9 low severity vulnerabilities
+2026-03-07T14:50:59.6581472Z 
+2026-03-07T14:50:59.6581979Z To address all issues (including breaking changes), run:
+2026-03-07T14:50:59.6582942Z   npm audit fix --force
+2026-03-07T14:50:59.6583361Z 
+2026-03-07T14:50:59.6583659Z Run `npm audit` for details.
+2026-03-07T14:50:59.6967713Z ##[group]Run sudo apt-get update
+2026-03-07T14:50:59.6968127Z [36;1msudo apt-get update[0m
+2026-03-07T14:50:59.6968485Z [36;1msudo apt-get install -y libgbm-dev[0m
+2026-03-07T14:50:59.6968846Z [36;1mnode runScraper.js[0m
+2026-03-07T14:50:59.7019947Z shell: /usr/bin/bash -e ***0***
+2026-03-07T14:50:59.7020274Z env:
+2026-03-07T14:50:59.7029932Z   FIREBASE_SERVICE_ACCOUNT: ***
+
+2026-03-07T14:50:59.7030247Z ##[endgroup]
+2026-03-07T14:50:59.7856749Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-03-07T14:50:59.8169242Z Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+2026-03-07T14:50:59.8183104Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+2026-03-07T14:50:59.8263183Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+2026-03-07T14:50:59.8286626Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+2026-03-07T14:50:59.8325729Z Get:6 https://packages.microsoft.com/repos/azure-cli noble InRelease [3564 B]
+2026-03-07T14:50:59.8394861Z Get:7 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+2026-03-07T14:50:59.9618282Z Get:8 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1806 kB]
+2026-03-07T14:50:59.9800286Z Get:9 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [332 kB]
+2026-03-07T14:50:59.9836377Z Get:10 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [177 kB]
+2026-03-07T14:50:59.9850542Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 c-n-f Metadata [16.7 kB]
+2026-03-07T14:50:59.9865554Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1564 kB]
+2026-03-07T14:50:59.9958163Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [318 kB]
+2026-03-07T14:50:59.9985165Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [386 kB]
+2026-03-07T14:51:00.0042164Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 c-n-f Metadata [32.9 kB]
+2026-03-07T14:51:00.0051412Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [2747 kB]
+2026-03-07T14:51:00.0224206Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [632 kB]
+2026-03-07T14:51:00.0704308Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Components [212 B]
+2026-03-07T14:51:00.0710979Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
+2026-03-07T14:51:00.0719575Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [7340 B]
+2026-03-07T14:51:00.0730356Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [10.5 kB]
+2026-03-07T14:51:00.0738625Z Get:22 http://azure.archive.ubuntu.com/ubuntu noble-backports/restricted amd64 Components [212 B]
+2026-03-07T14:51:00.0747709Z Get:23 http://azure.archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Components [212 B]
+2026-03-07T14:51:00.0845180Z Get:24 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [1504 kB]
+2026-03-07T14:51:00.0934629Z Get:25 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [241 kB]
+2026-03-07T14:51:00.0960438Z Get:26 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Components [21.5 kB]
+2026-03-07T14:51:00.0966219Z Get:27 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 c-n-f Metadata [10.1 kB]
+2026-03-07T14:51:00.0987240Z Get:28 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [975 kB]
+2026-03-07T14:51:00.1057576Z Get:29 http://azure.archive.ubuntu.com/ubuntu noble-security/universe Translation-en [218 kB]
+2026-03-07T14:51:00.1098149Z Get:30 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Components [74.2 kB]
+2026-03-07T14:51:00.1118957Z Get:31 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 c-n-f Metadata [20.6 kB]
+2026-03-07T14:51:00.1553891Z Get:36 https://packages.microsoft.com/repos/azure-cli noble/main amd64 Packages [2072 B]
+2026-03-07T14:51:00.1639537Z Get:32 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [2599 kB]
+2026-03-07T14:51:00.1811751Z Get:33 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [600 kB]
+2026-03-07T14:51:00.1856391Z Get:34 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Components [212 B]
+2026-03-07T14:51:00.1871396Z Get:35 http://azure.archive.ubuntu.com/ubuntu noble-security/multiverse amd64 Components [212 B]
+2026-03-07T14:51:00.2322131Z Get:37 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [97.8 kB]
+2026-03-07T14:51:06.1513303Z Fetched 14.8 MB in 2s (8539 kB/s)
+2026-03-07T14:51:06.9274002Z Reading package lists...
+2026-03-07T14:51:06.9634716Z Reading package lists...
+2026-03-07T14:51:07.1421149Z Building dependency tree...
+2026-03-07T14:51:07.1428689Z Reading state information...
+2026-03-07T14:51:07.3139362Z The following NEW packages will be installed:
+2026-03-07T14:51:07.3144029Z   libgbm-dev
+2026-03-07T14:51:07.3319409Z 0 upgraded, 1 newly installed, 0 to remove and 33 not upgraded.
+2026-03-07T14:51:07.3320274Z Need to get 12.7 kB of archives.
+2026-03-07T14:51:07.3321125Z After this operation, 81.9 kB of additional disk space will be used.
+2026-03-07T14:51:07.3322061Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-03-07T14:51:07.3499684Z Get:2 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libgbm-dev amd64 25.2.8-0ubuntu0.24.04.1 [12.7 kB]
+2026-03-07T14:51:07.6044844Z Fetched 12.7 kB in 0s (437 kB/s)
+2026-03-07T14:51:07.6276775Z Selecting previously unselected package libgbm-dev:amd64.
+2026-03-07T14:51:07.6603265Z (Reading database ... 
+2026-03-07T14:51:07.6604206Z (Reading database ... 5%
+2026-03-07T14:51:07.6604999Z (Reading database ... 10%
+2026-03-07T14:51:07.6605409Z (Reading database ... 15%
+2026-03-07T14:51:07.6605802Z (Reading database ... 20%
+2026-03-07T14:51:07.6606204Z (Reading database ... 25%
+2026-03-07T14:51:07.6606553Z (Reading database ... 30%
+2026-03-07T14:51:07.6606864Z (Reading database ... 35%
+2026-03-07T14:51:07.6607190Z (Reading database ... 40%
+2026-03-07T14:51:07.6607501Z (Reading database ... 45%
+2026-03-07T14:51:07.6607925Z (Reading database ... 50%
+2026-03-07T14:51:07.6728525Z (Reading database ... 55%
+2026-03-07T14:51:07.7377643Z (Reading database ... 60%
+2026-03-07T14:51:07.8015530Z (Reading database ... 65%
+2026-03-07T14:51:07.8498964Z (Reading database ... 70%
+2026-03-07T14:51:07.9018409Z (Reading database ... 75%
+2026-03-07T14:51:07.9692606Z (Reading database ... 80%
+2026-03-07T14:51:08.1113656Z (Reading database ... 85%
+2026-03-07T14:51:08.3051709Z (Reading database ... 90%
+2026-03-07T14:51:08.4216304Z (Reading database ... 95%
+2026-03-07T14:51:08.4216884Z (Reading database ... 100%
+2026-03-07T14:51:08.4217743Z (Reading database ... 219118 files and directories currently installed.)
+2026-03-07T14:51:08.4264631Z Preparing to unpack .../libgbm-dev_25.2.8-0ubuntu0.24.04.1_amd64.deb ...
+2026-03-07T14:51:08.4285344Z Unpacking libgbm-dev:amd64 (25.2.8-0ubuntu0.24.04.1) ...
+2026-03-07T14:51:08.4725469Z Setting up libgbm-dev:amd64 (25.2.8-0ubuntu0.24.04.1) ...
+2026-03-07T14:51:09.1521281Z 
+2026-03-07T14:51:09.1521905Z Running kernel seems to be up-to-date.
+2026-03-07T14:51:09.1522307Z 
+2026-03-07T14:51:09.1522573Z No services need to be restarted.
+2026-03-07T14:51:09.1522901Z 
+2026-03-07T14:51:09.1523186Z No containers need to be restarted.
+2026-03-07T14:51:09.1523513Z 
+2026-03-07T14:51:09.1523820Z No user sessions are running outdated binaries.
+2026-03-07T14:51:09.1524190Z 
+2026-03-07T14:51:09.1524938Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+2026-03-07T14:51:10.6358942Z [dotenv@17.3.1] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+2026-03-07T14:51:10.6362101Z Initializing Firebase with Service Account from ENV...
+2026-03-07T14:51:10.6596572Z Starting GitHub Actions Scraper Context...
+2026-03-07T14:51:10.6600261Z Starting scraper...
+2026-03-07T14:51:11.0892842Z Establishing session via https://planningaccess.york.gov.uk/online-applications/search.do?action=weeklyList
+2026-03-07T14:51:14.0330993Z Submitting weekly list search...
+2026-03-07T14:51:24.0419795Z Could not find form specifically by name, trying generic forms...
+2026-03-07T14:51:30.2589231Z Scraping search results page 1...
+2026-03-07T14:51:30.2943469Z Found 10 decided applications on page 1. Filtering for extensions...
+2026-03-07T14:51:30.2975892Z Navigating to next page: https://planningaccess.york.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page=2
+2026-03-07T14:51:34.7155108Z Scraping search results page 2...
+2026-03-07T14:51:34.7353824Z Found 10 decided applications on page 2. Filtering for extensions...
+2026-03-07T14:51:34.7384906Z Navigating to next page: https://planningaccess.york.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page=3
+2026-03-07T14:51:38.6578314Z Scraping search results page 3...
+2026-03-07T14:51:38.6738984Z Found 10 decided applications on page 3. Filtering for extensions...
+2026-03-07T14:51:38.6754021Z Navigating to next page: https://planningaccess.york.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page=4
+2026-03-07T14:51:42.4609925Z Scraping search results page 4...
+2026-03-07T14:51:42.4733825Z Found 10 decided applications on page 4. Filtering for extensions...
+2026-03-07T14:51:42.4745160Z Navigating to next page: https://planningaccess.york.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page=5
+2026-03-07T14:51:46.3074743Z Scraping search results page 5...
+2026-03-07T14:51:46.3188591Z Found 10 decided applications on page 5. Filtering for extensions...
+2026-03-07T14:51:46.3195154Z Navigating to next page: https://planningaccess.york.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page=6
+2026-03-07T14:51:49.7943596Z Scraping search results page 6...
+2026-03-07T14:51:49.8030111Z Found 10 decided applications on page 6. Filtering for extensions...
+2026-03-07T14:51:49.8034149Z Extracted a total of 15 extension applications from all pages.
+2026-03-07T14:51:50.1473165Z Fetching details for T9HDWOSJISG00...
+2026-03-07T14:51:51.8016021Z Skipping T9HDWOSJISG00 as decision is not approved: ''
+2026-03-07T14:51:51.9330789Z Fetching details for T99ADNSJIQL00...
+2026-03-07T14:51:53.6431543Z Skipping T99ADNSJIQL00 as decision is not approved: ''
+2026-03-07T14:51:53.7932523Z Fetching details for T961M7SJIOW00...
+2026-03-07T14:51:55.3811080Z Skipping T961M7SJIOW00 as decision is not approved: ''
+2026-03-07T14:51:55.5159070Z Fetching details for T961LGSJIOT00...
+2026-03-07T14:51:57.2130214Z Skipping T961LGSJIOT00 as decision is not approved: ''
+2026-03-07T14:51:57.3361387Z Fetching details for T8QRLPSJIKF00...
+2026-03-07T14:51:59.0297197Z Skipping T8QRLPSJIKF00 as decision is not approved: ''
+2026-03-07T14:51:59.1607610Z Fetching details for T8I7A0SJIIC00...
+2026-03-07T14:52:00.8901937Z Skipping T8I7A0SJIIC00 as decision is not approved: ''
+2026-03-07T14:52:01.0193565Z Fetching details for T8HIAYSJIHZ00...
+2026-03-07T14:52:02.8004801Z Skipping T8HIAYSJIHZ00 as decision is not approved: ''
+2026-03-07T14:52:02.9154717Z Fetching details for T8GCM6SJIHL00...
+2026-03-07T14:52:04.5172922Z Skipping T8GCM6SJIHL00 as decision is not approved: ''
+2026-03-07T14:52:04.6563475Z Fetching details for T8DT29SJIGB00...
+2026-03-07T14:52:06.2637224Z Skipping T8DT29SJIGB00 as decision is not approved: ''
+2026-03-07T14:52:06.3940541Z Fetching details for T7NVM4SJIC800...
+2026-03-07T14:52:08.0136819Z Skipping T7NVM4SJIC800 as decision is not approved: ''
+2026-03-07T14:52:08.1441613Z Fetching details for T7IBLWSJIBE00...
+2026-03-07T14:52:09.8626466Z Skipping T7IBLWSJIBE00 as decision is not approved: ''
+2026-03-07T14:52:09.9883294Z Fetching details for T7EMABSJI9V00...
+2026-03-07T14:52:11.5629080Z Skipping T7EMABSJI9V00 as decision is not approved: ''
+2026-03-07T14:52:11.6964067Z Fetching details for T7CRLMSJI9000...
+2026-03-07T14:52:13.4125508Z Skipping T7CRLMSJI9000 as decision is not approved: ''
+2026-03-07T14:52:13.5961119Z Fetching details for T5PYY1SJHRW00...
+2026-03-07T14:52:15.3643541Z Skipping T5PYY1SJHRW00 as decision is not approved: ''
+2026-03-07T14:52:15.5846510Z Fetching details for T3G6J8SJH4I00...
+2026-03-07T14:52:17.2795551Z Skipping T3G6J8SJH4I00 as decision is not approved: ''
+2026-03-07T14:52:17.2796237Z Scrape finished. Added: 0, Skipped: 15, Errors: 0
+2026-03-07T14:52:17.3953259Z Job completed successfully. *** added: 0, skipped: 15, errors: 0 ***
+2026-03-07T14:52:17.4150750Z Post job cleanup.
+2026-03-07T14:52:17.5737003Z Cache hit occurred on the primary key node-cache-Linux-x64-npm-b9aa7d2c8fc4d9d21974cb524b27997d23ea9b0d5d94be63da0472c69c39b6f0, not saving cache.
+2026-03-07T14:52:17.5868469Z Post job cleanup.
+2026-03-07T14:52:17.6843620Z [command]/usr/bin/git version
+2026-03-07T14:52:17.6881538Z git version 2.53.0
+2026-03-07T14:52:17.6927642Z Temporarily overriding HOME='/home/runner/work/_temp/3b5eb6ff-026c-4ee4-b965-05dda6a0fa9f' before making global git config changes
+2026-03-07T14:52:17.6929262Z Adding repository directory to the temporary git global config as a safe directory
+2026-03-07T14:52:17.6934980Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/benchmark-intelligence/benchmark-intelligence
+2026-03-07T14:52:17.6979730Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-03-07T14:52:17.7015247Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-03-07T14:52:17.7258824Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-03-07T14:52:17.7285567Z http.https://github.com/.extraheader
+2026-03-07T14:52:17.7298710Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-03-07T14:52:17.7331700Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-03-07T14:52:17.7568358Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-03-07T14:52:17.7600922Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-03-07T14:52:17.7952382Z Cleaning up orphan processes
