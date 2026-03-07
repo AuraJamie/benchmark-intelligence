@@ -13,19 +13,30 @@ function parseDetailPage(html) {
     const $ = cheerio.load(html);
     const fields = {};
 
-    $('#simpleDetailsTable tr').each((i, row) => {
+    const rows = $('#simpleDetailsTable tr');
+    console.log(`    Table rows found: ${rows.length}`);
+
+    rows.each((i, row) => {
         const th = $(row).find('th').text().replace(/\s+/g, ' ').trim().toLowerCase();
         const td = $(row).find('td').text().replace(/\s+/g, ' ').trim();
-        if (th && td) fields[th] = td;
+        if (th && td) {
+            fields[th] = td;
+            console.log(`    [${i}] "${th}" => "${td.substring(0, 60)}"`);
+        }
     });
+
+    // Use decision text as status when portal shows a generic/blank status
+    const rawStatus = fields['status'] || null;
+    const decisionText = fields['decision'] || null;
+    const effectiveStatus = (rawStatus && rawStatus !== 'Unknown') ? rawStatus : (decisionText || rawStatus || null);
 
     return {
         reference: fields['reference'] || fields['ref. no:'] || null,
         applicantName: fields['applicant name'] || fields['applicant'] || null,
         applicationReceived: fields['application received'] || fields['date received'] || null,
         applicationValidated: fields['application validated'] || fields['date validated'] || null,
-        appStatus: fields['status'] || null,
-        decisionText: fields['decision'] || null,
+        appStatus: effectiveStatus,
+        decisionText: decisionText,
         decisionDateStr: fields['decision issued date'] || fields['decision date'] || null,
         fullDescription: fields['proposal'] || fields['description'] || null,
     };
@@ -33,14 +44,15 @@ function parseDetailPage(html) {
 
 /**
  * Fetch a single detail page using a dedicated Puppeteer tab.
- * Uses 'domcontentloaded' which is much faster than 'networkidle2'.
+ * Uses 'networkidle2' to ensure the server has finished sending all content
+ * (York's portal streams HTML in chunks, so domcontentloaded fires too early).
  */
 async function fetchDetailWithPage(tabPage, url) {
-    await tabPage.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await tabPage.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
     try {
-        await tabPage.waitForSelector('#simpleDetailsTable', { timeout: 8000 });
+        await tabPage.waitForSelector('#simpleDetailsTable tr', { timeout: 8000 });
     } catch (_) {
-        // Continue anyway — we'll parse whatever we have
+        console.warn(`  Table rows not found for: ${url}`);
     }
     return tabPage.content();
 }
@@ -157,18 +169,20 @@ export async function runScraper() {
 
                 if (existingDoc.exists) {
                     const existing = existingDoc.data();
-                    await docRef.update({
-                        reference: reference || existing.reference || null,
+                    // Always write freshly-scraped values. Only fall back to existing if scraped value is absent.
+                    const updatePayload = {
+                        reference: reference !== null ? reference : (existing.reference || null),
                         address: addressText || existing.address,
                         description: fullDescription || existing.description,
-                        applicationStatus: appStatus !== 'Unknown' ? appStatus : (existing.applicationStatus || 'Unknown'),
-                        applicantName: applicantName !== 'Unknown' ? applicantName : (existing.applicantName || 'Unknown'),
+                        applicationStatus: appStatus || existing.applicationStatus || null,
+                        applicantName: (applicantName && applicantName !== 'Unknown') ? applicantName : (existing.applicantName || null),
                         dateReceived: parsed.applicationReceived || existing.dateReceived || null,
                         dateValidated: parsed.applicationValidated || existing.dateValidated || null,
                         dateDecided: decidedDate.toISOString(),
                         url: url,
-                    });
-                    console.log(`[${keyVal}] Updated existing.`);
+                    };
+                    console.log(`[${keyVal}] Updating: ref=${updatePayload.reference}, received=${updatePayload.dateReceived}`);
+                    await docRef.update(updatePayload);
                     stats.existing++;
                 } else {
                     const projectData = {
