@@ -79,10 +79,40 @@ export async function runScraper() {
         const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
         await mainPage.setUserAgent(UA);
 
-        // --- PHASE 1: Establish session and submit the monthly search form ---
+        // --- PHASE 1: Establish session and submit the weekly search form ---
         console.log('Establishing session and submitting search...');
-        await mainPage.goto(`${BASE_URL}/search.do?action=monthlyList`, { waitUntil: 'networkidle2' });
-        await mainPage.waitForSelector('form#monthlyListForm, form[name="searchCriteriaForm"]', { timeout: 10000 });
+        await mainPage.goto(`${BASE_URL}/search.do?action=weeklyList`, { waitUntil: 'networkidle2' });
+        await mainPage.waitForSelector('form#weeklyListForm, form[name="searchCriteriaForm"]', { timeout: 10000 });
+
+        // Calculate the Date of Monday for the current week (WB Date)
+        const now = new Date();
+        const day = now.getDay();
+        const diffToAdd = day === 0 ? -6 : 1 - day;
+        const monday = new Date(now.getTime() + diffToAdd * 24 * 60 * 60 * 1000);
+
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const dayStr = String(monday.getDate()).padStart(2, '0');
+        const monthStr = monthNames[monday.getMonth()];
+        const yearStr = monday.getFullYear();
+        const targetWeekValue = `${dayStr} ${monthStr} ${yearStr}`;
+        console.log(`Target Week Beginning (WB) Date calculated as: ${targetWeekValue}`);
+
+        // Try to select the calculated week or fallback to the most recent one
+        const availableOptions = await mainPage.evaluate(() => {
+            const select = document.querySelector('select#week');
+            return select ? Array.from(select.options).map(o => o.value) : [];
+        });
+
+        if (availableOptions.includes(targetWeekValue)) {
+            await mainPage.select('select#week', targetWeekValue);
+            console.log(`Successfully selected week: ${targetWeekValue}`);
+        } else {
+            console.log(`Warning: Target week "${targetWeekValue}" not found in dropdown. Available top option: ${availableOptions[0]}`);
+            if (availableOptions.length > 0) {
+                await mainPage.select('select#week', availableOptions[0]);
+                console.log(`Fell back to latest available week: ${availableOptions[0]}`);
+            }
+        }
 
         await mainPage.click('input[name="dateType"][value="DC_Decided"]').catch(() => {
             console.log('Warning: could not click DC_Decided radio.');
@@ -92,7 +122,7 @@ export async function runScraper() {
         await Promise.all([
             mainPage.waitForNavigation({ waitUntil: 'networkidle2' }),
             mainPage.evaluate(() => {
-                const form = document.querySelector('form#monthlyListForm') || document.forms[0];
+                const form = document.querySelector('form#weeklyListForm') || document.forms[0];
                 const btn = form.querySelector('input.button.primary') || form.querySelector('input[type="submit"]');
                 if (btn) btn.click(); else form.submit();
             })
