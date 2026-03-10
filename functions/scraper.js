@@ -174,15 +174,14 @@ export async function runScraper(targetWeekOverride = null) {
         console.log(`Found ${extensionApps.length} extension applications in total.`);
 
         // --- PHASE 3: Open concurrent browser tabs for fast detail page fetching ---
-        // Copy session cookies from mainPage so all tabs share the authenticated session
-        const sessionCookies = await mainPage.cookies();
+        // We DO NOT copy the session cookies from the mainPage.
+        // Sharing the main search session across concurrent tabs causes the portal to lose state and hides table rows.
+        await mainPage.close();
+
         const tabs = [];
         for (let i = 0; i < CONCURRENT_PAGES; i++) {
             const tab = await browser.newPage();
             await tab.setUserAgent(UA);
-            if (sessionCookies.length > 0) {
-                await tab.setCookie(...sessionCookies);
-            }
             tabs.push(tab);
         }
 
