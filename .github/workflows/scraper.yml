@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '0 17 * * 5' # 5:00 PM every Friday
   workflow_dispatch: # Allows manual triggering from the GitHub Actions tab
+    inputs:
+      targetWeek:
+        description: 'Target Week (e.g., "09 Mar 2026"). Leave blank to use current week.'
+        required: false
+        default: ''
 
 jobs:
   scrape:
@@ -32,4 +37,4 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libgbm-dev
-          node runScraper.js
+          node runScraper.js "${{ github.event.inputs.targetWeek }}"

@@ -63,7 +63,7 @@ async function fetchDetailWithPage(tabPage, url) {
     return tabPage.content();
 }
 
-export async function runScraper() {
+export async function runScraper(targetWeekOverride = null) {
     const stats = { added: 0, existing: 0, errors: 0 };
     let browser = null;
 
@@ -84,18 +84,24 @@ export async function runScraper() {
         await mainPage.goto(`${BASE_URL}/search.do?action=weeklyList`, { waitUntil: 'networkidle2' });
         await mainPage.waitForSelector('form#weeklyListForm, form[name="searchCriteriaForm"]', { timeout: 10000 });
 
-        // Calculate the Date of Monday for the current week (WB Date)
-        const now = new Date();
-        const day = now.getDay();
-        const diffToAdd = day === 0 ? -6 : 1 - day;
-        const monday = new Date(now.getTime() + diffToAdd * 24 * 60 * 60 * 1000);
+        let targetWeekValue;
+        if (targetWeekOverride) {
+            targetWeekValue = targetWeekOverride;
+            console.log(`Using overridden target week: ${targetWeekValue}`);
+        } else {
+            // Calculate the Date of Monday for the current week (WB Date)
+            const now = new Date();
+            const day = now.getDay();
+            const diffToAdd = day === 0 ? -6 : 1 - day;
+            const monday = new Date(now.getTime() + diffToAdd * 24 * 60 * 60 * 1000);
 
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const dayStr = String(monday.getDate()).padStart(2, '0');
-        const monthStr = monthNames[monday.getMonth()];
-        const yearStr = monday.getFullYear();
-        const targetWeekValue = `${dayStr} ${monthStr} ${yearStr}`;
-        console.log(`Target Week Beginning (WB) Date calculated as: ${targetWeekValue}`);
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const dayStr = String(monday.getDate()).padStart(2, '0');
+            const monthStr = monthNames[monday.getMonth()];
+            const yearStr = monday.getFullYear();
+            targetWeekValue = `${dayStr} ${monthStr} ${yearStr}`;
+            console.log(`Target Week Beginning (WB) Date calculated as: ${targetWeekValue}`);
+        }
 
         // Try to select the calculated week or fallback to the most recent one
         const availableOptions = await mainPage.evaluate(() => {

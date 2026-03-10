@@ -5,7 +5,8 @@ import { runScraper } from "./scraper.js";
 // Manually callable endpoint for the dashboard
 export const triggerSync = onRequest({ cors: true, timeoutSeconds: 300, memory: "1GiB" }, async (req, res) => {
     try {
-        const results = await runScraper();
+        const targetWeek = req.query.targetWeek || req.body.targetWeek || null;
+        const results = await runScraper(targetWeek);
         res.status(200).json({ success: true, message: "Sync complete.", data: results });
     } catch (error) {
         console.error("Manual sync failed:", error);

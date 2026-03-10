@@ -15,6 +15,25 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+const generateWBDates = (weeksBack = 52) => {
+    const dates = [];
+    const now = new Date();
+    const day = now.getDay();
+    const diffToAdd = day === 0 ? -6 : 1 - day;
+    const currentMonday = new Date(now.getTime() + diffToAdd * 24 * 60 * 60 * 1000);
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    for (let i = 0; i < weeksBack; i++) {
+        const monday = new Date(currentMonday.getTime() - (i * 7 * 24 * 60 * 60 * 1000));
+        const dayStr = String(monday.getDate()).padStart(2, '0');
+        const monthStr = monthNames[monday.getMonth()];
+        const yearStr = monday.getFullYear();
+        dates.push(`${dayStr} ${monthStr} ${yearStr}`);
+    }
+    return dates;
+};
+
 const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [projects, setProjects] = useState([]);
@@ -35,6 +54,11 @@ const Dashboard = () => {
     const [syncing, setSyncing] = useState(false);
     const [syncStatus, setSyncStatus] = useState(null); // null | 'success' | 'error' | 'waiting'
     const [syncReport, setSyncReport] = useState(null); // { added, skipped, errors, totalFound }
+
+    const [showSyncModal, setShowSyncModal] = useState(false);
+    const [selectedSyncDate, setSelectedSyncDate] = useState('current');
+    const syncDates = generateWBDates(52);
+
     const [builders, setBuilders] = useState([]);
     const [projectAssignments, setProjectAssignments] = useState([]);
     const [selectedBuilderToAssign, setSelectedBuilderToAssign] = useState('');
@@ -170,7 +194,12 @@ const Dashboard = () => {
         }
     };
 
+    const handleSyncClick = () => {
+        setShowSyncModal(true);
+    };
+
     const triggerSync = async () => {
+        setShowSyncModal(false);
         let token = localStorage.getItem('github_sync_token');
 
         if (!token) {
@@ -190,6 +219,11 @@ const Dashboard = () => {
         const syncStartTime = Date.now();
 
         try {
+            const bodyPayload = { ref: 'main' };
+            if (selectedSyncDate !== 'current') {
+                bodyPayload.inputs = { targetWeek: selectedSyncDate };
+            }
+
             const response = await fetch(
                 `https://api.github.com/repos/${owner}/${repo}/actions/workflows/scraper.yml/dispatches`,
                 {
@@ -199,7 +233,7 @@ const Dashboard = () => {
                         'Accept': 'application/vnd.github+json',
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ ref: 'main' }),
+                    body: JSON.stringify(bodyPayload),
                 }
             );
 
@@ -330,7 +364,7 @@ const Dashboard = () => {
                             </button>
                         </div>
                         <button
-                            onClick={triggerSync}
+                            onClick={handleSyncClick}
                             disabled={syncing}
                             className="flex justify-center items-center gap-2 rounded-lg bg-[#0f172a] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-black focus:outline-none focus:ring-2 focus:ring-[#0f172a] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed w-full md:w-auto min-w-[140px]"
                         >
@@ -774,6 +808,58 @@ const Dashboard = () => {
                         </div>
                     </div>
                 )}
+
+            {/* Sync Date Modal */}
+            {showSyncModal && (
+                <div className="fixed inset-0 z-[60] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                    <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setShowSyncModal(false)}></div>
+
+                        <span className="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true">&#8203;</span>
+
+                        <div className="inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:align-middle">
+                            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div className="sm:flex sm:items-start">
+                                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                        <h3 className="text-lg font-medium leading-6 text-gray-900" id="modal-title">
+                                            Select Week to Sync
+                                        </h3>
+                                        <div className="mt-4">
+                                            <select
+                                                value={selectedSyncDate}
+                                                onChange={(e) => setSelectedSyncDate(e.target.value)}
+                                                className="block w-full rounded-md border-gray-300 py-3 pl-3 pr-10 text-base focus:border-[#0f172a] focus:outline-none focus:ring-[#0f172a] sm:text-sm border shadow-sm"
+                                                size="8"
+                                            >
+                                                <option value="current" className="font-bold border-b border-gray-200 pb-2 mb-2">This Week (Current)</option>
+                                                {syncDates.map((date) => (
+                                                    <option key={date} value={date} className="py-1">{date}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                                <button
+                                    type="button"
+                                    className="inline-flex w-full justify-center rounded-md border border-transparent bg-[#0f172a] px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-black focus:outline-none focus:ring-2 focus:ring-[#0f172a] focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+                                    onClick={triggerSync}
+                                >
+                                    Start Scraper
+                                </button>
+                                <button
+                                    type="button"
+                                    className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#0f172a] focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                                    onClick={() => setShowSyncModal(false)}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };
