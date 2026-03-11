@@ -2,7 +2,7 @@ import Sidebar from './Sidebar';
 import { Menu } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import Logo from '../assets/BenchmarkLogoB&W.png';
+import Logo from '../assets/LogoColoured.png';
 
 const Layout = ({ children }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -30,7 +30,7 @@ const Layout = ({ children }) => {
                         <Menu className="h-6 w-6" />
                     </button>
                     <Link to="/" className="flex items-center gap-2 overflow-hidden">
-                        <img src={Logo} alt="Benchmark" className="h-8 w-8 object-contain shrink-0" />
+                        <img src={Logo} alt="Benchmark" className="h-9 w-9 object-contain shrink-0" />
                         <span className="font-semibold text-[17px] truncate text-[#0f172a]">Benchmark Intelligence</span>
                     </Link>
                 </div>

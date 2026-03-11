@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, Map as MapIcon, Users, LogOut, Loader2, Network, ClipboardList, LayoutDashboard, FileSignature, Receipt } from 'lucide-react';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
-import Logo from '../assets/BenchmarkLogoB&W.png';
+import Logo from '../assets/LogoColoured.png';
 
 const Sidebar = () => {
     const location = useLocation();
@@ -23,7 +23,7 @@ const Sidebar = () => {
     return (
         <div className="flex w-64 flex-col border-r border-gray-200 bg-white min-h-screen">
             <Link to="/" className="flex h-16 items-center border-b border-gray-100 px-6 mt-4 mb-4 gap-3 hover:bg-gray-50 transition-colors">
-                <img src={Logo} alt="Benchmark Intelligence" className="h-10 w-10 object-contain" />
+                <img src={Logo} alt="Benchmark Intelligence" className="h-11 w-11 object-contain" />
                 <span className="text-[17px] font-semibold leading-tight tracking-tight text-[#0f172a]">Benchmark<br />Intelligence</span>
             </Link>
 
