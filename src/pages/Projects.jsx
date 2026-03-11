@@ -2,7 +2,7 @@ import { useLocation } from 'react-router-dom';
 import { Search, Filter, Loader2, Link, MapPin, ExternalLink, X, Save, Map as MapIcon, List, Users, CheckCircle2, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, where, getDocs, writeBatch, limit } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, where, writeBatch, limit } from 'firebase/firestore';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';

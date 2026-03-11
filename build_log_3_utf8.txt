@@ -1,0 +1,105 @@
+﻿
+> benchmark-intelligence@0.0.0 build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32mÔ£ô[39m 25 modules transformed.
+node.exe : [31mÔ£ù[39m 
+Build failed in 385ms
+At C:\Program 
+Files\nodejs\npm.ps1:29 
+char:3
++   & $NODE_EXE $NPM_CLI_JS 
+$args
++   ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo          
+    : NotSpecified: ([31m  
+  Ô£ù[39m Build failed i   
+ n 385ms:String) [], Rem    
+oteException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+[31merror during build:
+[31m[vite]: Rollup failed 
+to resolve import 
+"react-signature-canvas" 
+from "C:/Users/jamie/Desktop
+/Business/Planning 
+Applications/Benchmark Intel
+ligence/src/pages/Contracts.
+jsx".
+This is most likely 
+unintended because it can 
+break your application at 
+runtime.
+If you do want to 
+externalize this module 
+explicitly add it to
+`build.rollupOptions.externa
+l`[31m
+    at viteLog (file:///C:/U
+sers/jamie/Desktop/Business/
+Planning%20Applications/Benc
+hmark%20Intelligence/node_mo
+dules/vite/dist/node/chunks/
+config.js:33635:57)
+    at file:///C:/Users/jami
+e/Desktop/Business/Planning%
+20Applications/Benchmark%20I
+ntelligence/node_modules/vit
+e/dist/node/chunks/config.js
+:33669:73
+    at onwarn (file:///C:/Us
+ers/jamie/Desktop/Business/P
+lanning%20Applications/Bench
+mark%20Intelligence/node_mod
+ules/@vitejs/plugin-react/di
+st/index.js:76:7)
+    at file:///C:/Users/jami
+e/Desktop/Business/Planning%
+20Applications/Benchmark%20I
+ntelligence/node_modules/vit
+e/dist/node/chunks/config.js
+:33669:28
+    at onRollupLog (file:///
+C:/Users/jamie/Desktop/Busin
+ess/Planning%20Applications/
+Benchmark%20Intelligence/nod
+e_modules/vite/dist/node/chu
+nks/config.js:33664:63)
+    at onLog (file:///C:/Use
+rs/jamie/Desktop/Business/Pl
+anning%20Applications/Benchm
+ark%20Intelligence/node_modu
+les/vite/dist/node/chunks/co
+nfig.js:33467:4)
+    at file:///C:/Users/jami
+e/Desktop/Business/Planning%
+20Applications/Benchmark%20I
+ntelligence/node_modules/rol
+lup/dist/es/shared/node-entr
+y.js:20981:32
+    at Object.logger [as 
+onLog] (file:///C:/Users/jam
+ie/Desktop/Business/Planning
+%20Applications/Benchmark%20
+Intelligence/node_modules/ro
+llup/dist/es/shared/node-ent
+ry.js:22968:9)
+    at ModuleLoader.handleIn
+validResolvedId (file:///C:/
+Users/jamie/Desktop/Business
+/Planning%20Applications/Ben
+chmark%20Intelligence/node_m
+odules/rollup/dist/es/shared
+/node-entry.js:21712:26)
+    at file:///C:/Users/jami
+e/Desktop/Business/Planning%
+20Applications/Benchmark%20I
+ntelligence/node_modules/rol
+lup/dist/es/shared/node-entr
+y.js:21670:26[39m
+

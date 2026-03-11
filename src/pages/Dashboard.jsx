@@ -57,10 +57,16 @@ const Dashboard = () => {
                     if (p.timestamp && p.timestamp.toDate) {
                         const pTime = p.timestamp.toDate();
                         if (!latestTime || pTime > latestTime) latestTime = pTime;
+                    }
 
-                        const dStr = getDateFormat(pTime);
-                        if (recentDatesCount[dStr] !== undefined) {
-                            recentDatesCount[dStr]++;
+                    // Tally New Projects chart using dateDecided
+                    if (p.dateDecided) {
+                        const dTime = new Date(p.dateDecided);
+                        if (!isNaN(dTime.getTime())) {
+                            const dStr = getDateFormat(dTime);
+                            if (recentDatesCount[dStr] !== undefined) {
+                                recentDatesCount[dStr]++;
+                            }
                         }
                     }
                 });
