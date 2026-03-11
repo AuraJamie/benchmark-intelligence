@@ -273,8 +273,8 @@ const Dashboard = () => {
 
     return (
         <>
-            <div className="w-full relative">
-                <header className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="w-full relative flex flex-col h-full overflow-hidden">
+                <header className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shrink-0">
                     <div>
                         <h1 className="text-3xl font-semibold tracking-tight">Projects</h1>
                         <p className="mt-2 text-sm text-gray-500">Manage intercepted council planning applications.</p>
@@ -306,7 +306,7 @@ const Dashboard = () => {
                 </header>
 
                 {syncStatus === 'success' && syncReport && (
-                    <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-6 py-4 shadow-sm relative">
+                    <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-6 py-4 shadow-sm relative shrink-0">
                         <button
                             onClick={() => { setSyncStatus(null); setSyncReport(null); }}
                             className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
@@ -342,13 +342,13 @@ const Dashboard = () => {
                     </div>
                 )}
                 {syncing && (
-                    <div className="mb-6 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800 flex items-center gap-3">
+                    <div className="mb-6 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800 flex items-center gap-3 shrink-0">
                         <Loader2 className="h-4 w-4 animate-spin" />
                         <span>The scraper is currently running. This usually takes 1-2 minutes. Results will appear here automatically...</span>
                     </div>
                 )}
                 {syncStatus === 'error' && !syncing && (
-                    <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 flex justify-between items-center">
+                    <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 flex justify-between items-center shrink-0">
                         <span>✗ Sync failed or timed out. Please try again later.</span>
                         <button onClick={() => setSyncStatus(null)} className="text-red-400 hover:text-red-600">
                             <X className="h-4 w-4" />
@@ -356,7 +356,7 @@ const Dashboard = () => {
                     </div>
                 )}
 
-                <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden shrink-0 mb-4">
                     <div className="flex items-center gap-4 border-b border-gray-100 p-4">
                         <div className="relative flex-1 max-w-md">
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -393,105 +393,107 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {selectedRowIds.length > 0 && viewMode === 'list' && (
-                    <div className="bg-[#0f172a]/5 border-b border-gray-200 p-3 flex items-center justify-between">
-                        <span className="text-sm font-medium text-[#0f172a]">{selectedRowIds.length} project(s) selected</span>
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="text"
-                                placeholder="Collection Name..."
-                                className="rounded-md border border-gray-300 py-1.5 px-3 text-sm focus:border-[#0f172a] focus:outline-none"
-                                value={batchCollectionName}
-                                onChange={(e) => setBatchCollectionName(e.target.value)}
-                            />
-                            <button
-                                onClick={applyCollectionToSelected}
-                                disabled={!batchCollectionName.trim()}
-                                className="rounded-md bg-[#0f172a] px-3 py-1.5 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
-                            >
-                                Add to Collection
-                            </button>
+                <div className="flex flex-col flex-1 min-h-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    {selectedRowIds.length > 0 && viewMode === 'list' && (
+                        <div className="bg-[#0f172a]/5 border-b border-gray-200 p-3 flex items-center justify-between shrink-0">
+                            <span className="text-sm font-medium text-[#0f172a]">{selectedRowIds.length} project(s) selected</span>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    placeholder="Collection Name..."
+                                    className="rounded-md border border-gray-300 py-1.5 px-3 text-sm focus:border-[#0f172a] focus:outline-none"
+                                    value={batchCollectionName}
+                                    onChange={(e) => setBatchCollectionName(e.target.value)}
+                                />
+                                <button
+                                    onClick={applyCollectionToSelected}
+                                    disabled={!batchCollectionName.trim()}
+                                    className="rounded-md bg-[#0f172a] px-3 py-1.5 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                                >
+                                    Add to Collection
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                <div className="overflow-x-auto">
                     {viewMode === 'list' ? (
                         <>
-                            <table className="w-full text-left text-sm text-gray-600">
-                                <thead className="bg-gray-50/50 text-xs uppercase text-gray-500">
-                                    <tr>
-                                        <th className="px-6 py-4 font-medium border-b border-gray-200 w-12 text-center">
-                                            <input
-                                                type="checkbox"
-                                                className="rounded border-gray-300 text-[#0f172a] focus:ring-[#0f172a]"
-                                                checked={filteredProjects.length > 0 && selectedRowIds.length === filteredProjects.length}
-                                                onChange={toggleSelectAll}
-                                            />
-                                        </th>
-                                        <th className="px-6 py-4 font-medium border-b border-gray-200">Address / Collection</th>
-                                        <th className="px-6 py-4 font-medium border-b border-gray-200">Description</th>
-                                        <th className="px-6 py-4 font-medium border-b border-gray-200">Status</th>
-                                        <th className="px-6 py-4 font-medium border-b border-gray-200">Decided</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 bg-white">
-                                    {loading ? (
+                            <div className="overflow-auto flex-1 relative">
+                                <table className="w-full text-left text-sm text-gray-600">
+                                    <thead className="bg-gray-50/50 text-xs uppercase text-gray-500 sticky top-0 z-10 shadow-sm">
                                         <tr>
-                                            <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
-                                                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-gray-400" />
-                                                Loading projects...
-                                            </td>
+                                            <th className="px-6 py-4 font-medium border-b border-gray-200 w-12 text-center">
+                                                <input
+                                                    type="checkbox"
+                                                    className="rounded border-gray-300 text-[#0f172a] focus:ring-[#0f172a]"
+                                                    checked={filteredProjects.length > 0 && selectedRowIds.length === filteredProjects.length}
+                                                    onChange={toggleSelectAll}
+                                                />
+                                            </th>
+                                            <th className="px-6 py-4 font-medium border-b border-gray-200">Address / Collection</th>
+                                            <th className="px-6 py-4 font-medium border-b border-gray-200">Description</th>
+                                            <th className="px-6 py-4 font-medium border-b border-gray-200">Status</th>
+                                            <th className="px-6 py-4 font-medium border-b border-gray-200">Decided</th>
                                         </tr>
-                                    ) : filteredProjects.length === 0 ? (
-                                        <tr>
-                                            <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
-                                                No projects found matching your criteria.
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        paginatedProjects.map((project) => (
-                                            <tr key={project.id} onClick={() => openProject(project)} className={`hover:bg-gray-50/50 cursor-pointer transition-colors ${selectedRowIds.includes(project.id) ? 'bg-blue-50/30' : ''}`}>
-                                                <td className="px-6 py-4 text-center" onClick={(e) => { e.stopPropagation(); toggleRowSelect(e, project.id); }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        className="rounded border-gray-300 text-[#0f172a] focus:ring-[#0f172a]"
-                                                        checked={selectedRowIds.includes(project.id)}
-                                                        onChange={e => { }}
-                                                    />
-                                                </td>
-                                                <td className="px-6 py-4 font-medium text-[#0f172a]">
-                                                    {project.address}
-                                                    {project.collectionId && (
-                                                        <div className="text-xs text-blue-600 font-normal mt-1 flex items-center gap-1">
-                                                            <Filter className="h-3 w-3" /> {project.collectionId}
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 truncate max-w-xs" title={project.description}>
-                                                    {project.description}
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border ${project.status === 'New' ? 'border-blue-200 bg-blue-50 text-blue-700' :
-                                                        project.status === 'Contacted' ? 'border-yellow-200 bg-yellow-50 text-yellow-700' :
-                                                            project.status === 'Assigned' ? 'border-green-200 bg-green-50 text-green-700' :
-                                                                project.status === 'Dead' ? 'border-red-200 bg-red-50 text-red-700' :
-                                                                    'border-gray-200 bg-gray-50 text-gray-700'
-                                                        }`}>
-                                                        {project.status || 'Unknown'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                                                    {project.dateDecided ? new Date(project.dateDecided).toLocaleDateString() : 'N/A'}
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100 bg-white">
+                                        {loading ? (
+                                            <tr>
+                                                <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
+                                                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-gray-400" />
+                                                    Loading projects...
                                                 </td>
                                             </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
+                                        ) : filteredProjects.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
+                                                    No projects found matching your criteria.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            paginatedProjects.map((project) => (
+                                                <tr key={project.id} onClick={() => openProject(project)} className={`hover:bg-gray-50/50 cursor-pointer transition-colors ${selectedRowIds.includes(project.id) ? 'bg-blue-50/30' : ''}`}>
+                                                    <td className="px-6 py-4 text-center" onClick={(e) => { e.stopPropagation(); toggleRowSelect(e, project.id); }}>
+                                                        <input
+                                                            type="checkbox"
+                                                            className="rounded border-gray-300 text-[#0f172a] focus:ring-[#0f172a]"
+                                                            checked={selectedRowIds.includes(project.id)}
+                                                            onChange={e => { }}
+                                                        />
+                                                    </td>
+                                                    <td className="px-6 py-4 font-medium text-[#0f172a]">
+                                                        {project.address}
+                                                        {project.collectionId && (
+                                                            <div className="text-xs text-blue-600 font-normal mt-1 flex items-center gap-1">
+                                                                <Filter className="h-3 w-3" /> {project.collectionId}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 truncate max-w-xs" title={project.description}>
+                                                        {project.description}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border ${project.status === 'New' ? 'border-blue-200 bg-blue-50 text-blue-700' :
+                                                            project.status === 'Contacted' ? 'border-yellow-200 bg-yellow-50 text-yellow-700' :
+                                                                project.status === 'Assigned' ? 'border-green-200 bg-green-50 text-green-700' :
+                                                                    project.status === 'Dead' ? 'border-red-200 bg-red-50 text-red-700' :
+                                                                        'border-gray-200 bg-gray-50 text-gray-700'
+                                                            }`}>
+                                                            {project.status || 'Unknown'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                                                        {project.dateDecided ? new Date(project.dateDecided).toLocaleDateString() : 'N/A'}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
 
                             {totalPages > 1 && (
-                                <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-3 sm:px-6">
+                                <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-3 sm:px-6 shrink-0">
                                     <span className="text-sm text-gray-700">
                                         Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredProjects.length)}</span> of <span className="font-medium">{filteredProjects.length}</span> results
                                     </span>
@@ -515,7 +517,7 @@ const Dashboard = () => {
                             )}
                         </>
                     ) : (
-                        <div className="h-[600px] w-full relative z-0">
+                        <div className="flex-1 w-full relative z-0 min-h-0">
                             <MapContainer center={[53.9591, -1.0815]} zoom={13} style={{ height: '100%', width: '100%' }}>
                                 <TileLayer
                                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

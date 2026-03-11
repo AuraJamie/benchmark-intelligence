@@ -21,15 +21,15 @@ const Layout = ({ children }) => {
             </div>
 
             {/* Main content */}
-            <main className="flex-1 overflow-auto w-full min-w-0">
+            <main className="flex-1 flex flex-col h-screen w-full min-w-0 overflow-hidden">
                 {/* Mobile header */}
-                <div className="md:hidden flex items-center p-4 bg-white border-b border-gray-200">
+                <div className="md:hidden flex items-center p-4 bg-white border-b border-gray-200 shrink-0">
                     <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 mr-2 text-gray-600 hover:bg-gray-100 rounded-md">
                         <Menu className="h-6 w-6" />
                     </button>
                     <span className="font-semibold text-[17px] truncate">Benchmark Intelligence</span>
                 </div>
-                <div className="p-4 md:p-8">
+                <div className="p-4 md:p-8 flex-1 overflow-hidden flex flex-col">
                     {children}
                 </div>
             </main>

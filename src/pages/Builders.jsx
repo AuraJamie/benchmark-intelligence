@@ -93,8 +93,8 @@ const Builders = () => {
     };
 
     return (
-        <div className="w-full relative">
-            <header className="mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="w-full relative flex flex-col h-full overflow-hidden">
+            <header className="mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shrink-0">
                 <div>
                     <h1 className="text-3xl font-semibold tracking-tight">Builders</h1>
                     <p className="mt-2 text-sm text-gray-500">Manage your network of trusted tradespeople.</p>
@@ -108,8 +108,8 @@ const Builders = () => {
                 </button>
             </header>
 
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center gap-4 border-b border-gray-100 p-4">
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col min-h-0 flex-1">
+                <div className="flex items-center gap-4 border-b border-gray-100 p-4 shrink-0">
                     <div className="relative flex-1 max-w-md">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                         <input
@@ -122,9 +122,9 @@ const Builders = () => {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                <div className="overflow-auto flex-1 relative">
                     <table className="w-full text-left text-sm text-gray-600">
-                        <thead className="bg-gray-50/50 text-xs uppercase text-gray-500">
+                        <thead className="bg-gray-50/50 text-xs uppercase text-gray-500 sticky top-0 z-10 shadow-sm">
                             <tr>
                                 <th className="px-6 py-4 font-medium border-b border-gray-200">Company ID</th>
                                 <th className="px-6 py-4 font-medium border-b border-gray-200">Name & Owner</th>

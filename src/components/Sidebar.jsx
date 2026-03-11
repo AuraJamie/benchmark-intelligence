@@ -12,7 +12,6 @@ const Sidebar = () => {
 
     const navItems = [
         { label: 'Projects', icon: Home, path: '/' },
-        { label: 'Map View', icon: MapIcon, path: '/map' },
         { label: 'Builders', icon: Users, path: '/builders' },
         { label: 'Capture Form', icon: ClipboardList, path: '/capture', external: true },
     ];
