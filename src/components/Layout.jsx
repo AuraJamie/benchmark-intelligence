@@ -30,9 +30,7 @@ const Layout = ({ children }) => {
                         <Menu className="h-6 w-6" />
                     </button>
                     <Link to="/" className="flex items-center gap-2 overflow-hidden">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0f172a] shrink-0 overflow-hidden">
-                            <img src={Logo} alt="Benchmark" className="h-5 w-5 object-contain" />
-                        </div>
+                        <img src={Logo} alt="Benchmark" className="h-8 w-8 object-contain shrink-0" />
                         <span className="font-semibold text-[17px] truncate text-[#0f172a]">Benchmark Intelligence</span>
                     </Link>
                 </div>
