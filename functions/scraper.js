@@ -177,7 +177,7 @@ export async function runScraper(targetWeekOverride = null) {
                 await sleep(1000);
                 try {
                     await Promise.all([
-                        mainPage.waitForNavigation({ waitUntil: 'networkidle2' }),
+                        mainPage.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => { }),
                         mainPage.evaluate((index) => document.querySelectorAll('#searchresults .searchresult')[index].querySelector('a').click(), i)
                     ]);
                 } catch (err) {
@@ -186,7 +186,7 @@ export async function runScraper(targetWeekOverride = null) {
 
                 let summaryHtml = '';
                 try {
-                    await mainPage.waitForSelector('#simpleDetailsTable tr', { timeout: 8000 });
+                    await mainPage.waitForSelector('table tr', { timeout: 15000 });
                     summaryHtml = await mainPage.content();
                 } catch (err) {
                     console.warn(`  Timeout waiting for summary table for ${keyVal}`);
@@ -198,9 +198,10 @@ export async function runScraper(targetWeekOverride = null) {
                     await sleep(1000);
                     // Native click instead of goto to preserve session WAF state
                     await Promise.all([
-                        mainPage.waitForNavigation({ waitUntil: 'networkidle2' }),
-                        mainPage.click('#subtab_details')
+                        mainPage.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => { }),
+                        mainPage.click('#subtab_details').catch(() => { })
                     ]);
+                    await mainPage.waitForSelector('table tr', { timeout: 15000 });
                     furtherInfoHtml = await mainPage.content();
                 } catch (err) {
                     console.warn(`  Could not load further info tab for ${keyVal}: ${err.message}`);
@@ -278,35 +279,45 @@ export async function runScraper(targetWeekOverride = null) {
                     stats.added++;
                 }
 
-                // Navigate back safely using the portal's back link
-                await sleep(1000);
-                const content = await mainPage.content();
-                const $h = cheerio.load(content);
-                const backUrl = $h('a:contains("search results")').attr('href');
-                if (backUrl) {
-                    await Promise.all([
-                        mainPage.waitForNavigation({ waitUntil: 'networkidle2' }),
-                        mainPage.goto('https://planningaccess.york.gov.uk' + backUrl, { waitUntil: 'networkidle2' })
-                    ]);
-                } else {
-                    await mainPage.goBack();
-                    await mainPage.goBack();
-                }
+                try {
+                    // Navigate back safely using the portal's back link
+                    await sleep(1000);
+                    const content = await mainPage.content();
+                    const $h = cheerio.load(content);
+                    const backUrl = $h('a:contains("search results")').attr('href');
+                    if (backUrl) {
+                        await Promise.all([
+                            mainPage.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => { }),
+                            mainPage.goto('https://planningaccess.york.gov.uk' + backUrl, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => { })
+                        ]);
+                    } else {
+                        await mainPage.goBack().catch(() => { });
+                        await mainPage.goBack().catch(() => { });
+                    }
 
-                // Assert return to search results before processing next element, otherwise element offsets and queries crash
-                await mainPage.waitForSelector('#searchresults', { timeout: 10000 });
+                    // Assert return to search results before processing next element, otherwise element offsets and queries crash
+                    await mainPage.waitForSelector('#searchresults', { timeout: 15000 });
+                } catch (navErr) {
+                    console.error(`  [${keyVal}] FATAL ERROR returning to search list: ${navErr.message}`);
+                    break; // Abort processing this page's results safely instead of crashing process
+                }
             }
 
-            const hasNext = await mainPage.evaluate(() => {
-                const next = document.querySelector('a.next');
-                if (next) { next.click(); return true; }
-                return false;
-            });
+            try {
+                const hasNext = await mainPage.evaluate(() => {
+                    const next = document.querySelector('a.next');
+                    if (next) { next.click(); return true; }
+                    return false;
+                });
 
-            if (hasNext) {
-                await mainPage.waitForNavigation({ waitUntil: 'networkidle2' });
-                pageNum++;
-            } else {
+                if (hasNext) {
+                    await mainPage.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => { });
+                    pageNum++;
+                } else {
+                    hasNextPage = false;
+                }
+            } catch (err) {
+                console.warn(`  Failed to navigate to next page: ${err.message}`);
                 hasNextPage = false;
             }
         }
