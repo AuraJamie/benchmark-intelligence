@@ -1,16 +1,21 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, where } from 'firebase/firestore';
-import { Receipt, Plus, Search, X, Calculator, Calendar, User, Home, CheckCircle2, AlertCircle, Clock, ArrowRight, Save, History, Percent } from 'lucide-react';
+import { Receipt, Plus, Search, X, Calculator, Calendar, User, Home, CheckCircle2, AlertCircle, Clock, ArrowRight, Save, History, Percent, MapPin, Building, ChevronRight, ExternalLink } from 'lucide-react';
 
 const BOE_BASE_RATE_DEFAULT = 5.25; // Example BoE rate
 
 const Invoices = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
+
     // Data states
     const [invoices, setInvoices] = useState([]);
     const [projects, setProjects] = useState([]);
     const [builders, setBuilders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     // Filter/UI states
     const [searchQuery, setSearchQuery] = useState('');
@@ -51,6 +56,27 @@ const Invoices = () => {
             unsubscribeBuilders();
         };
     }, []);
+
+    // Handle deep linking and syncing selected invoice with URL
+    useEffect(() => {
+        const id = searchParams.get('id');
+        if (id && invoices.length > 0) {
+            const inv = invoices.find(i => i.id === id);
+            if (inv) {
+                setSelectedInvoice(inv);
+            }
+        } else if (!id) {
+            setSelectedInvoice(null);
+        }
+    }, [searchParams, invoices]);
+
+    const openInvoice = (invoice) => {
+        setSearchParams({ id: invoice.id });
+    };
+
+    const closeInvoice = () => {
+        setSearchParams({});
+    };
 
     const calculateCommission = (quote) => {
         const total = parseFloat(quote) || 0;
@@ -243,7 +269,7 @@ const Invoices = () => {
                                 filteredInvoices.map(inv => {
                                     const nextPayment = Object.entries(inv.payments).find(([k, v]) => v.status !== 'Paid');
                                     return (
-                                        <tr key={inv.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedInvoice(inv)}>
+                                        <tr key={inv.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => openInvoice(inv)}>
                                             <td className="px-6 py-4">
                                                 <div className="font-medium text-[#0f172a]">{getProjectAddress(inv.projectId)}</div>
                                                 <div className="text-xs text-gray-500">{getBuilderName(inv.builderId)}</div>
@@ -253,8 +279,8 @@ const Invoices = () => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border ${inv.status === 'Paid' ? 'border-green-200 bg-green-50 text-green-700' :
-                                                        inv.status === 'Partial' ? 'border-blue-200 bg-blue-50 text-blue-700' :
-                                                            'border-orange-200 bg-orange-50 text-orange-700'
+                                                    inv.status === 'Partial' ? 'border-blue-200 bg-blue-50 text-blue-700' :
+                                                        'border-orange-200 bg-orange-50 text-orange-700'
                                                     }`}>
                                                     {inv.status}
                                                 </span>
@@ -388,9 +414,17 @@ const Invoices = () => {
                             <div className="px-6 py-5 border-b border-gray-200 bg-gray-50 flex justify-between items-center shrink-0">
                                 <div>
                                     <h2 className="text-xl font-bold text-[#0f172a]">Invoice Schedule</h2>
-                                    <p className="text-sm text-gray-500">{getProjectAddress(selectedInvoice.projectId)}</p>
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm mt-0.5">
+                                        <button onClick={(e) => { e.stopPropagation(); navigate(`/projects?id=${selectedInvoice.projectId}`); }} className="text-[#0284c7] hover:underline flex items-center gap-1 font-medium">
+                                            <MapPin className="h-3.5 w-3.5" /> Project: {getProjectAddress(selectedInvoice.projectId)}
+                                        </button>
+                                        <span className="text-gray-300">|</span>
+                                        <button onClick={(e) => { e.stopPropagation(); navigate(`/builders?id=${selectedInvoice.builderId}`); }} className="text-[#0284c7] hover:underline flex items-center gap-1 font-medium">
+                                            <Building className="h-3.5 w-3.5" /> Builder: {getBuilderName(selectedInvoice.builderId)}
+                                        </button>
+                                    </div>
                                 </div>
-                                <button onClick={() => setSelectedInvoice(null)} className="text-gray-400 hover:text-gray-600 focus:outline-none p-2 rounded-full hover:bg-gray-200 transition-colors">
+                                <button onClick={closeInvoice} className="text-gray-400 hover:text-gray-600 focus:outline-none p-2 rounded-full hover:bg-gray-200 transition-colors">
                                     <X className="h-6 w-6" />
                                 </button>
                             </div>
@@ -432,8 +466,8 @@ const Invoices = () => {
                                                     </div>
                                                     <div className="text-right">
                                                         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${p.status === 'Paid' ? 'border-green-200 bg-green-100 text-green-700' :
-                                                                interest > 0 ? 'border-red-200 bg-red-100 text-red-600' :
-                                                                    'border-blue-100 bg-blue-50 text-blue-600'
+                                                            interest > 0 ? 'border-red-200 bg-red-100 text-red-600' :
+                                                                'border-blue-100 bg-blue-50 text-blue-600'
                                                             }`}>
                                                             {interest > 0 && p.status !== 'Paid' ? 'Overdue' : p.status}
                                                         </span>

@@ -1,0 +1,83 @@
+﻿{
+  "status": "success",
+  "result": [
+    {
+      "platform": "gcfv2",
+      "id": "scheduledSync",
+      "project": "benchmark-intelligence-a5b7c",
+      "region": "europe-west2",
+      "scheduleTrigger": {},
+      "entryPoint": "scheduledSync",
+      "runtime": "nodejs20",
+      "source": {
+        "storageSource": {
+          "bucket": "gcf-v2-sources-785316881089-europe-west2",
+          "object": "scheduledSync/function-source.zip",
+          "generation": "1773248175482630"
+        }
+      },
+      "ingressSettings": "ALLOW_ALL",
+      "environmentVariables": {
+        "FIREBASE_CONFIG": "{\"projectId\":\"benchmark-intelligence-a5b7c\",\"storageBucket\":\"benchmark-intelligence-a5b7c.firebasestorage.app\"}",
+        "GCLOUD_PROJECT": "benchmark-intelligence-a5b7c",
+        "EVENTARC_CLOUD_EVENT_SOURCE": "projects/benchmark-intelligence-a5b7c/locations/europe-west2/services/scheduledSync",
+        "FUNCTION_TARGET": "scheduledSync",
+        "LOG_EXECUTION_ID": "true"
+      },
+      "timeoutSeconds": 540,
+      "uri": "https://europe-west2-benchmark-intelligence-a5b7c.cloudfunctions.net/scheduledSync",
+      "serviceAccount": "785316881089-compute@developer.gserviceaccount.com",
+      "availableMemoryMb": 2048,
+      "cpu": 1,
+      "concurrency": 80,
+      "labels": {
+        "deployment-scheduled": "true",
+        "firebase-functions-hash": "7fab1f55ebd3eb3f52305188a17fbe44eb7be334",
+        "deployment-tool": "cli-firebase"
+      },
+      "runServiceId": "scheduledsync",
+      "codebase": "default",
+      "hash": "7fab1f55ebd3eb3f52305188a17fbe44eb7be334",
+      "state": "ACTIVE"
+    },
+    {
+      "platform": "gcfv2",
+      "id": "scraper",
+      "project": "benchmark-intelligence-a5b7c",
+      "region": "europe-west2",
+      "httpsTrigger": {},
+      "entryPoint": "scraper",
+      "runtime": "nodejs20",
+      "source": {
+        "storageSource": {
+          "bucket": "gcf-v2-sources-785316881089-europe-west2",
+          "object": "scraper/function-source.zip",
+          "generation": "1773248248303188"
+        }
+      },
+      "ingressSettings": "ALLOW_ALL",
+      "environmentVariables": {
+        "FIREBASE_CONFIG": "{\"projectId\":\"benchmark-intelligence-a5b7c\",\"storageBucket\":\"benchmark-intelligence-a5b7c.firebasestorage.app\"}",
+        "GCLOUD_PROJECT": "benchmark-intelligence-a5b7c",
+        "EVENTARC_CLOUD_EVENT_SOURCE": "projects/benchmark-intelligence-a5b7c/locations/europe-west2/services/scraper",
+        "FUNCTION_TARGET": "scraper",
+        "LOG_EXECUTION_ID": "true",
+        "FUNCTION_SIGNATURE_TYPE": "http"
+      },
+      "timeoutSeconds": 540,
+      "uri": "https://europe-west2-benchmark-intelligence-a5b7c.cloudfunctions.net/scraper",
+      "serviceAccount": "785316881089-compute@developer.gserviceaccount.com",
+      "availableMemoryMb": 2048,
+      "cpu": 1,
+      "concurrency": 80,
+      "labels": {
+        "deployment-tool": "cli-firebase",
+        "firebase-functions-hash": "7fab1f55ebd3eb3f52305188a17fbe44eb7be334"
+      },
+      "runServiceId": "scraper",
+      "codebase": "default",
+      "hash": "7fab1f55ebd3eb3f52305188a17fbe44eb7be334",
+      "state": "ACTIVE"
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { FileSignature, Plus, X, Search, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
@@ -7,12 +8,15 @@ import 'react-quill-new/dist/quill.snow.css';
 import SignatureCanvas from 'react-signature-canvas';
 
 const Contracts = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('agreements'); // 'agreements' or 'versions'
 
     // Data states
     const [versions, setVersions] = useState([]);
     const [agreements, setAgreements] = useState([]);
     const [builders, setBuilders] = useState([]);
+    const [projects, setProjects] = useState([]);
 
     // UI States
     const [loading, setLoading] = useState(true);
@@ -29,6 +33,7 @@ const Contracts = () => {
     const [newVersionContent, setNewVersionContent] = useState('');
     const [selectedBuilderForAgreement, setSelectedBuilderForAgreement] = useState('');
     const [selectedVersionForAgreement, setSelectedVersionForAgreement] = useState('');
+    const [selectedProjectForAgreement, setSelectedProjectForAgreement] = useState('');
 
     const sigPad = useRef({});
 
@@ -47,12 +52,43 @@ const Contracts = () => {
             setLoading(false);
         });
 
+        const unsubscribeProjects = onSnapshot(query(collection(db, 'projects'), orderBy('address', 'asc')), (snapshot) => {
+            setProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        });
+
         return () => {
             unsubscribeBuilders();
             unsubscribeVersions();
             unsubscribeAgreements();
+            unsubscribeProjects();
         };
     }, []);
+
+    // Handle URL param selection
+    useEffect(() => {
+        const id = searchParams.get('id');
+        if (id && agreements.length > 0) {
+            const agreement = agreements.find(a => a.id === id);
+            if (agreement) {
+                if (agreement.status === 'Pending') {
+                    setSigningAgreement(agreement);
+                } else {
+                    setViewingAgreement(agreement);
+                }
+            }
+        } else {
+            setSigningAgreement(null);
+            setViewingAgreement(null);
+        }
+    }, [searchParams, agreements]);
+
+    const openAgreement = (id) => {
+        setSearchParams({ id });
+    };
+
+    const closeAgreement = () => {
+        setSearchParams({});
+    };
 
     // Actions
     const handleSaveVersion = async () => {
@@ -93,6 +129,7 @@ const Contracts = () => {
             await addDoc(collection(db, 'agreements'), {
                 builderId: selectedBuilderForAgreement,
                 versionId: selectedVersionForAgreement,
+                projectId: selectedProjectForAgreement,
                 status: 'Pending',
                 dateIssued: serverTimestamp(),
                 dateSigned: null,
@@ -101,6 +138,7 @@ const Contracts = () => {
             setShowNewAgreement(false);
             setSelectedBuilderForAgreement('');
             setSelectedVersionForAgreement('');
+            setSelectedProjectForAgreement('');
             setActiveTab('agreements');
         } catch (error) {
             console.error("Error issuing agreement:", error);
@@ -213,6 +251,7 @@ const Contracts = () => {
                         <table className="w-full text-left text-sm text-gray-600">
                             <thead className="bg-gray-50 text-xs uppercase text-gray-500 sticky top-0 z-10 shadow-sm border-b border-gray-200">
                                 <tr>
+                                    <th className="px-6 py-4 font-medium">Project</th>
                                     <th className="px-6 py-4 font-medium">Builder</th>
                                     <th className="px-6 py-4 font-medium">Version Issued</th>
                                     <th className="px-6 py-4 font-medium">Status</th>
@@ -231,8 +270,11 @@ const Contracts = () => {
                                     </tr>
                                 ) : (
                                     filteredAgreements.map(agreement => (
-                                        <tr key={agreement.id} className="hover:bg-gray-50">
+                                        <tr key={agreement.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => openAgreement(agreement.id)}>
                                             <td className="px-6 py-4 font-medium text-[#0f172a]">
+                                                {projects.find(p => p.id === agreement.projectId)?.address || 'General Agreement'}
+                                            </td>
+                                            <td className="px-6 py-4">
                                                 {getBuilderName(agreement.builderId)}
                                             </td>
                                             <td className="px-6 py-4">
@@ -253,15 +295,9 @@ const Contracts = () => {
                                                 {agreement.dateIssued ? new Date(agreement.dateIssued.toDate()).toLocaleDateString() : 'Just now'}
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                {agreement.status === 'Pending' ? (
-                                                    <button onClick={() => setSigningAgreement(agreement)} className="text-[#0284c7] hover:text-[#0369a1] font-semibold text-sm">
-                                                        Collect Signature
-                                                    </button>
-                                                ) : (
-                                                    <button onClick={() => setViewingAgreement(agreement)} className="text-gray-600 hover:text-black font-semibold text-sm cursor-pointer">
-                                                        View Details
-                                                    </button>
-                                                )}
+                                                <button onClick={(e) => { e.stopPropagation(); openAgreement(agreement.id); }} className="text-[#0284c7] hover:text-[#0369a1] font-semibold text-sm">
+                                                    {agreement.status === 'Pending' ? 'Collect Signature' : 'View Details'}
+                                                </button>
                                             </td>
                                         </tr>
                                     ))
@@ -302,9 +338,19 @@ const Contracts = () => {
                             <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center shrink-0">
                                 <div>
                                     <h2 className="text-lg font-semibold text-[#0f172a]">Collect Agreement Signature</h2>
-                                    <p className="text-sm text-gray-500">For {getBuilderName(signingAgreement.builderId)}</p>
+                                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                                        <span>For {getBuilderName(signingAgreement.builderId)}</span>
+                                        {signingAgreement.projectId && (
+                                            <>
+                                                <span className="text-gray-300">|</span>
+                                                <button onClick={(e) => { e.stopPropagation(); navigate(`/projects?id=${signingAgreement.projectId}`); }} className="text-blue-600 hover:underline">
+                                                    Project: {projects.find(p => p.id === signingAgreement.projectId)?.address}
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
-                                <button onClick={() => setSigningAgreement(null)} className="text-gray-400 hover:text-gray-600 focus:outline-none p-2 rounded-full hover:bg-gray-200 transition-colors">
+                                <button onClick={closeAgreement} className="text-gray-400 hover:text-gray-600 focus:outline-none p-2 rounded-full hover:bg-gray-200 transition-colors">
                                     <X className="h-6 w-6" />
                                 </button>
                             </div>
@@ -332,7 +378,7 @@ const Contracts = () => {
                             </div>
                             <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 shrink-0">
                                 <button
-                                    onClick={() => setSigningAgreement(null)}
+                                    onClick={closeAgreement}
                                     className="px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50"
                                 >
                                     Cancel
@@ -358,9 +404,21 @@ const Contracts = () => {
                             <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center shrink-0">
                                 <div>
                                     <h2 className="text-lg font-semibold text-[#0f172a]">Executed Agreement</h2>
-                                    <p className="text-sm text-green-600 font-medium">Signed by {getBuilderName(viewingAgreement.builderId)} on {viewingAgreement.dateSigned ? new Date(viewingAgreement.dateSigned.toDate()).toLocaleString() : 'N/A'}</p>
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm">
+                                        <p className="text-green-600 font-medium">Signed by {getBuilderName(viewingAgreement.builderId)}</p>
+                                        {viewingAgreement.projectId && (
+                                            <>
+                                                <span className="text-gray-300">|</span>
+                                                <button onClick={(e) => { e.stopPropagation(); navigate(`/projects?id=${viewingAgreement.projectId}`); }} className="text-blue-600 hover:underline">
+                                                    Project: {projects.find(p => p.id === viewingAgreement.projectId)?.address}
+                                                </button>
+                                            </>
+                                        )}
+                                        <span className="text-gray-300">|</span>
+                                        <p className="text-gray-500">{viewingAgreement.dateSigned ? new Date(viewingAgreement.dateSigned.toDate()).toLocaleString() : 'N/A'}</p>
+                                    </div>
                                 </div>
-                                <button onClick={() => setViewingAgreement(null)} className="text-gray-400 hover:text-gray-600 focus:outline-none p-2 rounded-full hover:bg-gray-200 transition-colors">
+                                <button onClick={closeAgreement} className="text-gray-400 hover:text-gray-600 focus:outline-none p-2 rounded-full hover:bg-gray-200 transition-colors">
                                     <X className="h-6 w-6" />
                                 </button>
                             </div>
@@ -470,6 +528,19 @@ const Contracts = () => {
                                             <option value="" disabled>Choose a builder...</option>
                                             {builders.map(b => (
                                                 <option key={b.id} value={b.id}>{b.companyName} ({b.ownerName})</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Select Project</label>
+                                        <select
+                                            value={selectedProjectForAgreement}
+                                            onChange={(e) => setSelectedProjectForAgreement(e.target.value)}
+                                            className="block w-full rounded-md border-gray-300 py-3 pl-3 pr-10 text-base focus:border-[#0f172a] focus:outline-none focus:ring-[#0f172a] sm:text-sm border shadow-sm"
+                                        >
+                                            <option value="">No Project (General Agreement)</option>
+                                            {projects.map(p => (
+                                                <option key={p.id} value={p.id}>{p.address}</option>
                                             ))}
                                         </select>
                                     </div>
