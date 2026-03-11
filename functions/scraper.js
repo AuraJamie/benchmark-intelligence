@@ -135,75 +135,73 @@ export async function runScraper(targetWeekOverride = null) {
         ]);
 
         // --- PHASE 2: Collect all extension apps across all pages ---
-        const extensionApps = [];
         let hasNextPage = true;
         let pageNum = 1;
 
         while (hasNextPage) {
             console.log(`Scraping results page ${pageNum}...`);
-            const html = await mainPage.content();
-            const $ = cheerio.load(html);
-            const results = $('#searchresults .searchresult');
-            console.log(`  ${results.length} decided applications on page ${pageNum}.`);
+            await mainPage.waitForSelector('#searchresults', { timeout: 10000 });
 
-            results.each((i, el) => {
-                const item = $(el);
-                const description = item.find('a').text().replace(/\s+/g, ' ').trim();
-                if (!description.toLowerCase().includes('extension')) return;
+            // Count results dynamically from DOM structure
+            const resultsCount = await mainPage.evaluate(() => document.querySelectorAll('#searchresults .searchresult').length);
+            console.log(`  ${resultsCount} decided applications on page ${pageNum}.`);
 
-                const relativeUrl = item.find('a').attr('href');
-                if (!relativeUrl) return;
+            for (let i = 0; i < resultsCount; i++) {
+                const appInfo = await mainPage.evaluate((index) => {
+                    const el = document.querySelectorAll('#searchresults .searchresult')[index];
+                    const a = el.querySelector('a');
+                    const desc = a ? a.innerText.replace(/\s+/g, ' ').trim() : '';
+                    const addr = el.querySelector('.address') ? el.querySelector('.address').innerText.replace(/\s+/g, ' ').trim() : '';
+                    const href = a ? a.getAttribute('href') : '';
+                    return { desc, addr, href };
+                }, i);
 
-                const keyVal = new URLSearchParams(relativeUrl.split('?')[1]).get('keyVal');
-                if (!keyVal) return;
+                let isExtension = false;
+                if (appInfo.desc.toLowerCase().includes('extension')) isExtension = true;
 
+                if (!isExtension) {
+                    continue; // Skip without navigating
+                }
+
+                if (!appInfo.href) continue;
+
+                // We have a match! We click it, collect, and go back.
+                const keyVal = new URLSearchParams(appInfo.href.split('?')[1]).get('keyVal');
                 const detailUrl = `${BASE_URL}/applicationDetails.do?activeTab=summary&keyVal=${keyVal}`;
-                const addressText = item.find('.address').text().replace(/\s+/g, ' ').trim();
-                extensionApps.push({ keyVal, url: detailUrl, description, addressText });
-            });
 
-            const nextLink = $('a.next').attr('href');
-            if (nextLink) {
-                pageNum++;
-                await mainPage.goto(new URL(nextLink, BASE_URL).href, { waitUntil: 'networkidle2' });
-            } else {
-                hasNextPage = false;
-            }
-        }
+                console.log(`[${keyVal}] Clicking into summary tab... (${appInfo.desc.substring(0, 40)}...)`);
 
-        console.log(`Found ${extensionApps.length} extension applications in total.`);
+                const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-        // --- PHASE 3: Open concurrent browser tabs for fast detail page fetching ---
-        // We DO NOT copy the session cookies from the mainPage.
-        // Sharing the main search session across concurrent tabs causes the portal to lose state and hides table rows.
-        await mainPage.close();
+                // Jump into specific result
+                await sleep(1500);
+                await Promise.all([
+                    mainPage.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 25000 }).catch(() => { }),
+                    mainPage.evaluate((index) => document.querySelectorAll('#searchresults .searchresult')[index].querySelector('a').click(), i)
+                ]);
 
-        const tabs = [];
-        for (let i = 0; i < CONCURRENT_PAGES; i++) {
-            const tab = await browser.newPage();
-            await tab.setUserAgent(UA);
-            tabs.push(tab);
-        }
+                let summaryHtml = '';
+                try {
+                    await mainPage.waitForSelector('#simpleDetailsTable tr', { timeout: 8000 });
+                    summaryHtml = await mainPage.content();
+                } catch (err) {
+                    console.warn(`  Timeout waiting for summary table for ${keyVal}`);
+                }
 
-        // --- PHASE 4: Process all apps using a work queue with concurrent tabs ---
-        let queueIndex = 0;
-
-        async function processApp(app, tab) {
-            const { keyVal, url, description, addressText } = app;
-            const docRef = db.collection('projects').doc(keyVal);
-
-            try {
-                console.log(`[${keyVal}] Fetching summary tab...`);
-                const summaryHtml = await fetchDetailWithPage(tab, url);
-
-                // Also fetch the "Further Information" tab which contains applicant name
-                const detailsUrl = url.replace('activeTab=summary', 'activeTab=details');
-                console.log(`[${keyVal}] Fetching further-info tab...`);
-                const furtherInfoHtml = await fetchDetailWithPage(tab, detailsUrl);
+                console.log(`[${keyVal}] Clicking further-info tab...`);
+                let furtherInfoHtml = '';
+                try {
+                    await sleep(1000);
+                    const detailsUrl = detailUrl.replace('activeTab=summary', 'activeTab=details');
+                    await mainPage.goto(detailsUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
+                    await mainPage.waitForSelector('#simpleDetailsTable tr', { timeout: 8000 });
+                    furtherInfoHtml = await mainPage.content();
+                } catch (err) {
+                    console.warn(`  Could not load further info tab for ${keyVal}: ${err.message}`);
+                }
 
                 const parsed = parseDetailPages([summaryHtml, furtherInfoHtml]);
-
-                const fullDescription = parsed.fullDescription || description;
+                const fullDescription = parsed.fullDescription || appInfo.desc;
                 const applicantName = parsed.applicantName || 'Unknown';
                 const reference = parsed.reference;
                 const appStatus = parsed.appStatus || parsed.decisionText || 'Unknown';
@@ -217,30 +215,30 @@ export async function runScraper(targetWeekOverride = null) {
                     if (!isNaN(p)) decidedDate = p;
                 }
 
+                // Process into DB
+                const docRef = db.collection('projects').doc(keyVal);
                 const existingDoc = await docRef.get();
 
                 if (existingDoc.exists) {
                     const existing = existingDoc.data();
-                    // Always write freshly-scraped values. Only fall back to existing if scraped value is absent.
                     const updatePayload = {
                         reference: reference !== null ? reference : (existing.reference || null),
-                        address: addressText || existing.address,
+                        address: appInfo.addr || existing.address,
                         description: fullDescription || existing.description,
                         applicationStatus: appStatus || existing.applicationStatus || null,
                         applicantName: (applicantName && applicantName !== 'Unknown') ? applicantName : (existing.applicantName || null),
                         dateReceived: parsed.applicationReceived || existing.dateReceived || null,
                         dateValidated: parsed.applicationValidated || existing.dateValidated || null,
                         dateDecided: decidedDate.toISOString(),
-                        url: url,
+                        url: detailUrl,
                     };
-                    console.log(`[${keyVal}] Updating: ref=${updatePayload.reference}, received=${updatePayload.dateReceived}`);
                     await docRef.update(updatePayload);
                     stats.existing++;
                 } else {
                     const projectData = {
                         id: keyVal,
                         reference: reference || null,
-                        address: addressText,
+                        address: appInfo.addr,
                         description: fullDescription,
                         status: 'New',
                         applicationStatus: appStatus,
@@ -248,16 +246,13 @@ export async function runScraper(targetWeekOverride = null) {
                         dateReceived: parsed.applicationReceived || null,
                         dateValidated: parsed.applicationValidated || null,
                         dateDecided: decidedDate.toISOString(),
-                        url: url,
+                        url: detailUrl,
                         notes: '',
-                        collectionId: null,
-                        timestamp: new Date(),
-                        coordinates: null,
+                        timestamp: new Date().toISOString()
                     };
 
-                    // Geocode the address
                     try {
-                        const encoded = encodeURIComponent(`${addressText}, York, UK`);
+                        const encoded = encodeURIComponent(`${appInfo.addr}, York, UK`);
                         const geo = await axios.get(
                             `https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&limit=1`,
                             { headers: { 'User-Agent': 'BenchmarkIntelligence/1.0 (jamie.dark.business@gmail.com)' }, timeout: 8000 }
@@ -274,32 +269,44 @@ export async function runScraper(targetWeekOverride = null) {
                     }
 
                     await docRef.set(projectData);
-                    console.log(`[${keyVal}] Added new.`);
                     stats.added++;
                 }
-            } catch (err) {
-                console.error(`[${keyVal}] Error: ${err.message}`);
-                stats.errors++;
+
+                // Navigate back safely using the portal's back link
+                const content = await mainPage.content();
+                const $h = cheerio.load(content);
+                const backUrl = $h('a:contains("search results")').attr('href');
+                if (backUrl) {
+                    await mainPage.goto('https://planningaccess.york.gov.uk' + backUrl, { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => { });
+                } else {
+                    await mainPage.goBack();
+                    await mainPage.goBack();
+                }
+
+                // Assert return to search results before processing next element, otherwise element offsets and queries crash
+                await mainPage.waitForSelector('#searchresults', { timeout: 10000 });
+            }
+
+            const hasNext = await mainPage.evaluate(() => {
+                const next = document.querySelector('a.next');
+                if (next) { next.click(); return true; }
+                return false;
+            });
+
+            if (hasNext) {
+                await mainPage.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => { });
+                pageNum++;
+            } else {
+                hasNextPage = false;
             }
         }
-
-        // Distribute work across concurrent tabs
-        async function runWorker(tab) {
-            while (queueIndex < extensionApps.length) {
-                const app = extensionApps[queueIndex++];
-                await processApp(app, tab);
-            }
-        }
-
-        // Run all workers concurrently
-        await Promise.all(tabs.map(tab => runWorker(tab)));
 
         console.log(`Done. Added: ${stats.added}, Existing: ${stats.existing}, Errors: ${stats.errors}`);
 
         // Log to Firestore for dashboard reporting
         await db.collection('scraper_logs').add({
             ...stats,
-            totalFound: extensionApps.length,
+            totalFound: stats.added + stats.existing,
             timestamp: new Date(),
             status: 'completed'
         });
