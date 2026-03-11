@@ -71,6 +71,7 @@ const Projects = () => {
     const [selectedBuilderToAssign, setSelectedBuilderToAssign] = useState('');
 
     const [sortBy, setSortBy] = useState('dateDecidedDesc');
+    const STATUS_OPTIONS = ['New', 'Pack Required', 'Pack Created', 'Pack Sent', 'Quoted', 'Won', 'Paid', 'Archive'];
     const [filterStatus, setFilterStatus] = useState('All');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 20;
@@ -250,14 +251,35 @@ const Projects = () => {
 
     const handleBatchCollect = async () => {
         if (selectedRowIds.length === 0 || !batchCollectionName.trim()) return;
-        const batch = writeBatch(db);
-        selectedRowIds.forEach(id => {
-            const ref = doc(db, 'projects', id);
-            batch.update(ref, { collectionId: batchCollectionName });
-        });
-        await batch.commit();
-        setSelectedRowIds([]);
-        setBatchCollectionName('');
+        try {
+            const batch = writeBatch(db);
+            selectedRowIds.forEach(id => {
+                const ref = doc(db, 'projects', id);
+                batch.update(ref, { collectionId: batchCollectionName });
+            });
+            await batch.commit();
+            setSelectedRowIds([]);
+            setBatchCollectionName('');
+        } catch (error) {
+            console.error("Batch collection update error:", error);
+            alert("Failed to update collection.");
+        }
+    };
+
+    const handleBatchStatusUpdate = async (status) => {
+        if (selectedRowIds.length === 0 || !status) return;
+        try {
+            const batch = writeBatch(db);
+            selectedRowIds.forEach(id => {
+                const ref = doc(db, 'projects', id);
+                batch.update(ref, { status: status });
+            });
+            await batch.commit();
+            setSelectedRowIds([]);
+        } catch (error) {
+            console.error("Batch status update error:", error);
+            alert("Failed to update status.");
+        }
     };
 
     const triggerSync = async () => {
@@ -342,10 +364,9 @@ const Projects = () => {
                     <div className="flex items-center gap-3 w-full sm:w-auto">
                         <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="rounded-lg border border-gray-300 py-2.5 px-3 text-sm focus:border-[#0f172a] focus:outline-none bg-white">
                             <option value="All">All Statuses</option>
-                            <option value="New">New</option>
-                            <option value="Contacted">Contacted</option>
-                            <option value="Assigned">Assigned</option>
-                            <option value="Dead">Dead</option>
+                            {STATUS_OPTIONS.map(status => (
+                                <option key={status} value={status}>{status}</option>
+                            ))}
                         </select>
                         <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="rounded-lg border border-gray-300 py-2.5 px-3 text-sm focus:border-[#0f172a] focus:outline-none bg-white">
                             <option value="dateDecidedDesc">Decided (Newest)</option>
@@ -359,15 +380,30 @@ const Projects = () => {
                     <div className="bg-blue-50/50 px-4 py-3 border-b border-blue-100 flex items-center justify-between animate-in slide-in-from-left-2 duration-200">
                         <div className="flex items-center gap-3">
                             <span className="text-sm font-bold text-blue-900">{selectedRowIds.length} projects selected</span>
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    placeholder="Enter Collection Name..."
-                                    value={batchCollectionName}
-                                    onChange={(e) => setBatchCollectionName(e.target.value)}
-                                    className="rounded border border-blue-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 w-48"
-                                />
-                                <button onClick={handleBatchCollect} className="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-blue-700">Apply Collection</button>
+                            <div className="flex gap-4">
+                                <div className="flex gap-2 items-center">
+                                    <input
+                                        type="text"
+                                        placeholder="Collection..."
+                                        value={batchCollectionName}
+                                        onChange={(e) => setBatchCollectionName(e.target.value)}
+                                        className="rounded border border-blue-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 w-32"
+                                    />
+                                    <button onClick={handleBatchCollect} className="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-blue-700">Apply</button>
+                                </div>
+                                <div className="h-6 w-px bg-blue-200"></div>
+                                <div className="flex gap-2 items-center">
+                                    <select
+                                        onChange={(e) => handleBatchStatusUpdate(e.target.value)}
+                                        className="rounded border border-blue-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+                                        defaultValue=""
+                                    >
+                                        <option value="" disabled>Update Status...</option>
+                                        {STATUS_OPTIONS.map(status => (
+                                            <option key={status} value={status}>{status}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <button onClick={() => setSelectedRowIds([])} className="text-blue-600 font-bold text-xs hover:underline">Clear Selection</button>
@@ -404,7 +440,12 @@ const Projects = () => {
                                                 </td>
                                                 <td className="px-6 py-4 truncate max-w-xs" title={project.description}>{project.description}</td>
                                                 <td className="px-6 py-4">
-                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border ${project.status === 'New' ? 'border-blue-200 bg-blue-50 text-blue-700' : project.status === 'Contacted' ? 'border-yellow-200 bg-yellow-50 text-yellow-700' : project.status === 'Assigned' ? 'border-green-200 bg-green-50 text-green-700' : project.status === 'Dead' ? 'border-red-200 bg-red-50 text-red-700' : 'border-gray-200 bg-gray-50 text-gray-700'}`}>{project.status || 'Unknown'}</span>
+                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border ${project.status === 'Won' ? 'border-green-200 bg-green-50 text-green-700' :
+                                                            project.status === 'Archive' ? 'border-gray-200 bg-gray-50 text-gray-700' :
+                                                                project.status === 'Paid' ? 'border-purple-200 bg-purple-50 text-purple-700' :
+                                                                    project.status === 'Quoted' ? 'border-blue-200 bg-blue-50 text-blue-700' :
+                                                                        'border-yellow-200 bg-yellow-50 text-yellow-700'
+                                                        }`}>{project.status || 'New'}</span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-gray-500">{project.dateDecided ? new Date(project.dateDecided).toLocaleDateString() : 'N/A'}</td>
                                             </tr>
@@ -426,7 +467,11 @@ const Projects = () => {
                     </>
                 ) : (
                     <div className="flex-1 w-full relative z-0 min-h-0">
-                        <MapContainer center={[53.9591, -1.0815]} zoom={13} style={{ height: '100%', width: '100%' }}>
+                        <MapContainer
+                            center={selectedProject?.coordinates?.lat ? [selectedProject.coordinates.lat, selectedProject.coordinates.lng] : [53.9591, -1.0815]}
+                            zoom={selectedProject ? 16 : 13}
+                            style={{ height: '100%', width: '100%' }}
+                        >
                             <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                             {filteredProjects.filter(p => p.coordinates?.lat && p.coordinates?.lng).map(project => (
                                 <Marker key={project.id} position={[project.coordinates.lat, project.coordinates.lng]} eventHandlers={{ click: () => openProject(project) }}>
@@ -468,22 +513,59 @@ const Projects = () => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 bg-gray-50 p-6 rounded-xl border border-gray-100">
-                                    <div><h3 className="text-sm font-medium text-gray-500">Reference</h3><p className="mt-1 text-sm font-medium text-gray-900">{activeProject.reference || 'N/A'}</p></div>
-                                    <div><h3 className="text-sm font-medium text-gray-500">App Status</h3><p className="mt-1 text-sm font-medium text-gray-900">{activeProject.applicationStatus || 'N/A'}</p></div>
-                                    <div><h3 className="text-sm font-medium text-gray-500">Council Link</h3><a href={activeProject.url} target="_blank" rel="noopener noreferrer" className="mt-1 text-sm font-medium text-[#0284c7] hover:underline flex items-center gap-1">View Portal <ExternalLink className="h-3 w-3" /></a></div>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 bg-gray-50 p-6 rounded-xl border border-gray-100 relative">
+                                    <div className="absolute top-4 right-4 flex gap-2">
+                                        <button
+                                            onClick={() => {
+                                                setViewMode('map');
+                                                // The map will auto-center because of our change to MapContainer
+                                            }}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-white border border-gray-200 rounded-lg text-[#0f172a] hover:bg-gray-50 shadow-sm"
+                                        >
+                                            <MapIcon className="h-3.5 w-3.5 text-blue-500" /> View on Map
+                                        </button>
+                                        <a href={activeProject.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-white border border-gray-200 rounded-lg text-[#0f172a] hover:bg-gray-50 shadow-sm">
+                                            Portal <ExternalLink className="h-3.5 w-3.5 text-gray-400" />
+                                        </a>
+                                    </div>
+                                    <div className="md:col-span-3 pb-2 border-b border-gray-200 mb-2">
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                            <div><h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Reference</h3><p className="mt-1 text-sm font-semibold text-gray-900">{activeProject.reference || 'N/A'}</p></div>
+                                            <div><h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">App Status</h3><p className="mt-1 text-sm font-semibold text-gray-900">{activeProject.applicationStatus || 'N/A'}</p></div>
+                                            <div className="md:col-span-2"><h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Applicant</h3><p className="mt-1 text-sm font-semibold text-gray-900">{activeProject.applicantName || 'N/A'}</p></div>
+                                        </div>
+                                    </div>
+                                    <div><h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Received</h3><p className="mt-1 text-sm font-medium text-gray-700">{activeProject.dateReceived ? new Date(activeProject.dateReceived).toLocaleDateString() : 'N/A'}</p></div>
+                                    <div><h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Validated</h3><p className="mt-1 text-sm font-medium text-gray-700">{activeProject.dateValidated ? new Date(activeProject.dateValidated).toLocaleDateString() : 'N/A'}</p></div>
+                                    <div><h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Decided</h3><p className="mt-1 text-sm font-medium text-gray-700">{activeProject.dateDecided ? new Date(activeProject.dateDecided).toLocaleDateString() : 'N/A'}</p></div>
                                 </div>
 
-                                {activeProject.homeownerName && (
-                                    <div className="bg-blue-50/50 p-6 border border-blue-100 rounded-xl space-y-4">
-                                        <h3 className="text-sm font-semibold text-blue-900 flex items-center gap-2"><ClipboardList className="h-4 w-4" /> Homeowner Details</h3>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                <div className="bg-blue-50/50 p-6 border border-blue-100 rounded-xl space-y-4">
+                                    <h3 className="text-sm font-semibold text-blue-900 flex items-center justify-between">
+                                        <span className="flex items-center gap-2"><ClipboardList className="h-4 w-4" /> Homeowner Details</span>
+                                        {!activeProject.homeownerName && (
+                                            <a
+                                                href={`#/capture?id=${activeProject.id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-sm"
+                                            >
+                                                <ExternalLink className="h-3 w-3" /> Open Capture Form
+                                            </a>
+                                        )}
+                                    </h3>
+                                    {activeProject.homeownerName ? (
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                             <div><h4 className="text-xs font-medium text-blue-700 uppercase tracking-widest">Name</h4><p className="mt-1 text-sm font-medium text-blue-900">{activeProject.homeownerName}</p></div>
                                             <div><h4 className="text-xs font-medium text-blue-700 uppercase tracking-widest">Email</h4><a href={`mailto:${activeProject.homeownerEmail}`} className="mt-1 text-sm text-blue-600 hover:underline font-medium">{activeProject.homeownerEmail}</a></div>
                                             <div><h4 className="text-xs font-medium text-blue-700 uppercase tracking-widest">Phone</h4><a href={`tel:${activeProject.homeownerPhone}`} className="mt-1 text-sm text-blue-600 hover:underline font-medium">{activeProject.homeownerPhone}</a></div>
                                         </div>
-                                    </div>
-                                )}
+                                    ) : (
+                                        <div className="text-center py-4">
+                                            <p className="text-sm text-blue-700/60 italic">No homeowner details captured yet.</p>
+                                        </div>
+                                    )}
+                                </div>
 
                                 <div className="space-y-6">
                                     <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2 flex items-center gap-2"><Network className="h-5 w-5 text-gray-400" /> Linked Entities</h3>
@@ -522,11 +604,70 @@ const Projects = () => {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8">
-                                    <div><label className="block text-sm font-medium text-gray-700 mb-2">Project Status</label><select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} className="block w-full rounded-md border-gray-300 py-2.5 pl-3 pr-10 text-sm focus:border-[#0f172a] focus:ring-[#0f172a] border"><option value="New">New</option><option value="Contacted">Contacted</option><option value="Assigned">Assigned</option><option value="Dead">Dead</option></select></div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Project Status</label>
+                                        <select
+                                            value={editStatus}
+                                            onChange={(e) => setEditStatus(e.target.value)}
+                                            className="block w-full rounded-md border-gray-300 py-2.5 pl-3 pr-10 text-sm focus:border-[#0f172a] focus:ring-[#0f172a] border"
+                                        >
+                                            {STATUS_OPTIONS.map(status => (
+                                                <option key={status} value={status}>{status}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                     <div><label className="block text-sm font-medium text-gray-700 mb-2">Internal Notes</label><textarea rows={4} value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#0f172a] focus:ring-[#0f172a] text-sm p-3 border" placeholder="Add notes..." /></div>
                                 </div>
 
-                                <div className="bg-gray-50 p-6 rounded-xl border border-gray-100"><h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-4"><Users className="h-4 w-4 text-gray-500" /> Assign New Builder</h3><div className="flex gap-3"><select value={selectedBuilderToAssign} onChange={(e) => setSelectedBuilderToAssign(e.target.value)} className="block w-full rounded-md border-gray-300 text-sm focus:border-[#0f172a] focus:ring-[#0f172a] border"><option value="" disabled>Select builder...</option>{builders.filter(b => b.availability).map(b => (<option key={b.id} value={b.id}>{b.companyName}</option>))}</select><button onClick={assignLead} disabled={!selectedBuilderToAssign} className="bg-[#0284c7] px-4 py-2 rounded-md text-sm font-semibold text-white hover:bg-[#0369a1] disabled:opacity-50">Assign</button></div></div>
+                                <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
+                                    <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                                        <Users className="h-4 w-4 text-gray-500" /> Assign Builders
+                                    </h3>
+                                    <div className="space-y-4">
+                                        <div className="flex gap-3">
+                                            <select
+                                                value={selectedBuilderToAssign}
+                                                onChange={(e) => setSelectedBuilderToAssign(e.target.value)}
+                                                className="block w-full rounded-md border-gray-300 text-sm focus:border-[#0f172a] focus:ring-[#0f172a] border"
+                                            >
+                                                <option value="" disabled>Select builder to add...</option>
+                                                {builders.filter(b => b.availability).map(b => (
+                                                    <option key={b.id} value={b.id}>{b.companyName}</option>
+                                                ))}
+                                            </select>
+                                            <button
+                                                onClick={assignLead}
+                                                disabled={!selectedBuilderToAssign}
+                                                className="bg-[#0f172a] px-6 py-2 rounded-md text-sm font-semibold text-white hover:bg-black disabled:opacity-50 whitespace-nowrap"
+                                            >
+                                                Add to Project
+                                            </button>
+                                        </div>
+
+                                        {projectAssignments.length > 0 && (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
+                                                {projectAssignments.map(asgn => {
+                                                    const builder = builders.find(b => b.id === asgn.builderId);
+                                                    return (
+                                                        <div key={asgn.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-xs font-bold">
+                                                                    {builder?.companyName?.charAt(0) || '?'}
+                                                                </div>
+                                                                <div className="text-sm font-medium text-gray-900 truncate max-w-[120px]">
+                                                                    {builder?.companyName || 'Unknown'}
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-[10px] font-bold text-blue-600 uppercase bg-blue-50 px-2 py-1 rounded">
+                                                                {asgn.status}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div className="flex shrink-0 justify-end px-6 py-4 bg-gray-50 border-t border-gray-200 gap-3"><button onClick={closeProject} className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 border border-gray-300 hover:bg-gray-50">Cancel</button><button onClick={saveProjectDetails} className="rounded-md bg-[#0f172a] px-4 py-2 text-sm font-semibold text-white hover:bg-black flex items-center gap-2"><Save className="h-4 w-4" />Save Changes</button></div>

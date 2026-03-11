@@ -84,7 +84,7 @@ const Capture = () => {
                 if (finalProjectId) {
                     const projectRef = doc(db, 'projects', finalProjectId);
                     await updateDoc(projectRef, {
-                        status: 'Contacted',
+                        status: 'Pack Required',
                         homeownerName: formData.fullName,
                         homeownerEmail: formData.email,
                         homeownerPhone: formData.phone,
