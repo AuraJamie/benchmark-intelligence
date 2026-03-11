@@ -39,6 +39,8 @@ const Dashboard = () => {
     const [projects, setProjects] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedProject, setSelectedProject] = useState(null);
+    const [closingProject, setClosingProject] = useState(null);
+    const activeProject = selectedProject || closingProject;
     const [editNotes, setEditNotes] = useState('');
     const [editStatus, setEditStatus] = useState('');
     const location = useLocation();
@@ -150,9 +152,16 @@ const Dashboard = () => {
         : filteredProjects;
 
     const openProject = (project) => {
+        setClosingProject(null);
         setSelectedProject(project);
         setEditNotes(project.notes || '');
         setEditStatus(project.status || 'New');
+    };
+
+    const closeProject = () => {
+        setClosingProject(selectedProject);
+        setSelectedProject(null);
+        setTimeout(() => setClosingProject(null), 300);
     };
 
     const saveProjectDetails = async () => {
@@ -163,7 +172,7 @@ const Dashboard = () => {
                 notes: editNotes,
                 status: editStatus
             });
-            setSelectedProject(null);
+            closeProject();
         } catch (error) {
             console.error("Error updating project:", error);
             alert("Failed to save project details.");
@@ -420,7 +429,7 @@ const Dashboard = () => {
                         <>
                             <div className="overflow-auto flex-1 relative">
                                 <table className="w-full text-left text-sm text-gray-600">
-                                    <thead className="bg-gray-50/50 text-xs uppercase text-gray-500 sticky top-0 z-10 shadow-sm">
+                                    <thead className="bg-gray-50 text-xs uppercase text-gray-500 sticky top-0 z-10 shadow-sm">
                                         <tr>
                                             <th className="px-6 py-4 font-medium border-b border-gray-200 w-12 text-center">
                                                 <input
@@ -550,197 +559,193 @@ const Dashboard = () => {
                 </div>
             </div >
 
-            {/* Slide-over Panel for Project Details */}
-            {
-                selectedProject && (
-                    <div className="fixed inset-0 z-[60] overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
-                        <div className="absolute inset-0 overflow-hidden">
-                            <div className="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setSelectedProject(null)}></div>
-                            <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full md:pl-10">
-                                <div className="pointer-events-auto w-screen max-w-md transform transition-transform">
-                                    <div className="flex h-full flex-col overflow-y-scroll bg-white shadow-xl">
-                                        <div className="px-4 py-6 sm:px-6 bg-[#0f172a] text-white flex justify-between items-center">
+            {/* Full Page Slide-over for Project Details */}
+            <div className={`absolute inset-0 z-[60] bg-white flex flex-col transform transition-transform duration-300 ease-in-out ${selectedProject ? 'translate-x-0' : 'translate-x-full'} ${!activeProject ? 'hidden' : ''}`}>
+                {activeProject && (
+                    <>
+                        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center shrink-0">
+                            <div>
+                                <h2 className="text-xl font-semibold text-[#0f172a]" id="slide-over-title">Project Details</h2>
+                                <p className="text-sm text-gray-500 mt-0.5">{activeProject.id}</p>
+                            </div>
+                            <button onClick={closeProject} className="text-gray-400 hover:text-gray-600 focus:outline-none p-2 rounded-full hover:bg-gray-200 transition-colors">
+                                <span className="sr-only">Close panel</span>
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-8 bg-white">
+                            <div className="max-w-4xl mx-auto space-y-8">
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div>
+                                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Address</h3>
+                                        <p className="mt-2 text-base text-gray-900 flex items-start gap-2 font-medium">
+                                            <MapPin className="h-5 w-5 mt-0.5 text-[#0284c7] shrink-0" />
+                                            {activeProject.address}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Description</h3>
+                                        <p className="mt-2 text-base text-gray-900 leading-relaxed">{activeProject.description}</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 bg-gray-50 p-6 rounded-xl border border-gray-100">
+                                    <div>
+                                        <h3 className="text-sm font-medium text-gray-500">Reference</h3>
+                                        <p className="mt-1 text-sm font-medium text-gray-900">{activeProject.reference || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-medium text-gray-500">App Status</h3>
+                                        <p className="mt-1 text-sm font-medium text-gray-900">{activeProject.applicationStatus || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-medium text-gray-500">Applicant</h3>
+                                        <p className="mt-1 text-sm font-medium text-gray-900">{activeProject.applicantName || 'Not recorded'}</p>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-medium text-gray-500">Council Link</h3>
+                                        <a href={activeProject.url} target="_blank" rel="noopener noreferrer" className="mt-1 text-sm font-medium text-[#0284c7] hover:underline flex items-center gap-1">
+                                            View Portal <ExternalLink className="h-3 w-3" />
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-medium text-gray-500">App Received</h3>
+                                        <p className="mt-1 text-sm font-medium text-gray-900">{activeProject.dateReceived || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-medium text-gray-500">App Validated</h3>
+                                        <p className="mt-1 text-sm font-medium text-gray-900">{activeProject.dateValidated || 'N/A'}</p>
+                                    </div>
+                                </div>
+
+                                {activeProject.homeownerName && (
+                                    <div className="bg-blue-50/50 p-6 border border-blue-100 rounded-xl space-y-4">
+                                        <h3 className="text-sm font-semibold text-blue-900 flex items-center gap-2"><ClipboardList className="h-4 w-4" /> Homeowner Capture Details</h3>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                             <div>
-                                                <h2 className="text-lg font-semibold" id="slide-over-title">Project Details</h2>
-                                                <p className="text-sm text-gray-300 mt-1">{selectedProject.id}</p>
+                                                <h4 className="text-xs font-medium text-blue-700 uppercase tracking-widest">Name</h4>
+                                                <p className="mt-1 text-sm font-medium text-blue-900">{activeProject.homeownerName}</p>
                                             </div>
-                                            <button onClick={() => setSelectedProject(null)} className="rounded-md text-gray-300 hover:text-white focus:outline-none">
-                                                <span className="sr-only">Close panel</span>
-                                                <X className="h-6 w-6" />
-                                            </button>
-                                        </div>
-                                        <div className="relative flex-1 px-4 py-6 sm:px-6 space-y-6">
-
                                             <div>
-                                                <h3 className="text-sm font-medium text-gray-500">Address</h3>
-                                                <p className="mt-1 text-sm text-gray-900 flex items-start gap-2">
-                                                    <MapPin className="h-4 w-4 mt-0.5 text-gray-400 shrink-0" />
-                                                    {selectedProject.address}
-                                                </p>
+                                                <h4 className="text-xs font-medium text-blue-700 uppercase tracking-widest">Submitted</h4>
+                                                <p className="mt-1 text-sm text-blue-900 font-medium">{activeProject.homeownerSubmissionDate ? new Date(activeProject.homeownerSubmissionDate).toLocaleDateString() : 'N/A'}</p>
                                             </div>
-
                                             <div>
-                                                <h3 className="text-sm font-medium text-gray-500">Description</h3>
-                                                <p className="mt-1 text-sm text-gray-900">{selectedProject.description}</p>
+                                                <h4 className="text-xs font-medium text-blue-700 uppercase tracking-widest">Email</h4>
+                                                <a href={`mailto:${activeProject.homeownerEmail}`} className="mt-1 text-sm text-blue-600 hover:underline break-all font-medium inline-block">{activeProject.homeownerEmail}</a>
                                             </div>
-
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <h3 className="text-sm font-medium text-gray-500">Reference</h3>
-                                                    <p className="mt-1 text-sm text-gray-900">{selectedProject.reference || 'N/A'}</p>
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-sm font-medium text-gray-500">App Status</h3>
-                                                    <p className="mt-1 text-sm text-gray-900">{selectedProject.applicationStatus || 'N/A'}</p>
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-sm font-medium text-gray-500">Applicant</h3>
-                                                    <p className="mt-1 text-sm text-gray-900">{selectedProject.applicantName || 'Not recorded'}</p>
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-sm font-medium text-gray-500">Council Link</h3>
-                                                    <a href={selectedProject.url} target="_blank" rel="noopener noreferrer" className="mt-1 text-sm text-blue-600 hover:text-blue-500 flex items-center gap-1">
-                                                        View Portal <ExternalLink className="h-3 w-3" />
-                                                    </a>
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-sm font-medium text-gray-500">App Received</h3>
-                                                    <p className="mt-1 text-sm text-gray-900">{selectedProject.dateReceived || 'N/A'}</p>
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-sm font-medium text-gray-500">App Validated</h3>
-                                                    <p className="mt-1 text-sm text-gray-900">{selectedProject.dateValidated || 'N/A'}</p>
-                                                </div>
-                                            </div>
-
-                                            {selectedProject.homeownerName && (
-                                                <div className="bg-blue-50/50 p-4 border border-blue-100 rounded-lg space-y-3">
-                                                    <h3 className="text-sm font-semibold text-blue-900 mb-2">Homeowner Capture Details</h3>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div>
-                                                            <h4 className="text-xs font-medium text-blue-700 uppercase tracking-widers">Name</h4>
-                                                            <p className="mt-0.5 text-sm font-medium text-blue-900">{selectedProject.homeownerName}</p>
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="text-xs font-medium text-blue-700 uppercase tracking-widers">Submitted</h4>
-                                                            <p className="mt-0.5 text-sm text-blue-900">{selectedProject.homeownerSubmissionDate ? new Date(selectedProject.homeownerSubmissionDate).toLocaleDateString() : 'N/A'}</p>
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="text-xs font-medium text-blue-700 uppercase tracking-widers">Email</h4>
-                                                            <a href={`mailto:${selectedProject.homeownerEmail}`} className="mt-0.5 text-sm text-blue-600 hover:underline break-all">{selectedProject.homeownerEmail}</a>
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="text-xs font-medium text-blue-700 uppercase tracking-widers">Phone</h4>
-                                                            <a href={`tel:${selectedProject.homeownerPhone}`} className="mt-0.5 text-sm text-blue-600 hover:underline">{selectedProject.homeownerPhone}</a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            <hr className="border-gray-200" />
-
                                             <div>
-                                                <label htmlFor="status" className="block text-sm font-medium text-gray-700">Project Status</label>
-                                                <select
-                                                    id="status"
-                                                    value={editStatus}
-                                                    onChange={(e) => setEditStatus(e.target.value)}
-                                                    className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-[#0f172a] focus:outline-none focus:ring-[#0f172a] sm:text-sm"
-                                                >
-                                                    <option value="New">New</option>
-                                                    <option value="Contacted">Contacted</option>
-                                                    <option value="Assigned">Assigned</option>
-                                                    <option value="Dead">Dead</option>
-                                                </select>
+                                                <h4 className="text-xs font-medium text-blue-700 uppercase tracking-widest">Phone</h4>
+                                                <a href={`tel:${activeProject.homeownerPhone}`} className="mt-1 text-sm text-blue-600 hover:underline font-medium inline-block">{activeProject.homeownerPhone}</a>
                                             </div>
-
-                                            <div>
-                                                <label htmlFor="notes" className="block text-sm font-medium text-gray-700">Internal Notes</label>
-                                                <div className="mt-1">
-                                                    <textarea
-                                                        id="notes"
-                                                        rows={4}
-                                                        value={editNotes}
-                                                        onChange={(e) => setEditNotes(e.target.value)}
-                                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#0f172a] focus:ring-[#0f172a] sm:text-sm p-3 border"
-                                                        placeholder="Add important notes here..."
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <hr className="border-gray-200" />
-
-                                            <div>
-                                                <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2 mb-3">
-                                                    <Users className="h-4 w-4 text-gray-500" />
-                                                    Assign Leads
-                                                </h3>
-
-                                                <div className="flex gap-2">
-                                                    <select
-                                                        value={selectedBuilderToAssign}
-                                                        onChange={(e) => setSelectedBuilderToAssign(e.target.value)}
-                                                        className="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-[#0f172a] focus:outline-none focus:ring-[#0f172a] sm:text-sm border"
-                                                    >
-                                                        <option value="" disabled>Select a builder...</option>
-                                                        {builders.filter(b => b.availability).map(b => (
-                                                            <option key={b.id} value={b.id}>{b.companyName} ({b.companyId})</option>
-                                                        ))}
-                                                    </select>
-                                                    <button
-                                                        type="button"
-                                                        onClick={assignLead}
-                                                        disabled={!selectedBuilderToAssign}
-                                                        className="inline-flex justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50"
-                                                    >
-                                                        Assign
-                                                    </button>
-                                                </div>
-
-                                                {projectAssignments.length > 0 && (
-                                                    <div className="mt-4">
-                                                        <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Currently Assigned</h4>
-                                                        <ul className="space-y-2">
-                                                            {projectAssignments.map(assignment => {
-                                                                const bData = builders.find(b => b.id === assignment.builderId);
-                                                                return (
-                                                                    <li key={assignment.id} className="text-sm flex justify-between items-center bg-gray-50 p-2 rounded-md border border-gray-100">
-                                                                        <span>{bData ? bData.companyName : 'Unknown Builder'}</span>
-                                                                        <span className={`text-xs font-medium ${assignment.status === 'Accepted' ? 'text-green-600' : 'text-gray-500'}`}>
-                                                                            {assignment.status}
-                                                                        </span>
-                                                                    </li>
-                                                                );
-                                                            })}
-                                                        </ul>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                        </div>
-                                        <div className="flex flex-shrink-0 justify-end px-4 py-4 bg-gray-50 border-t border-gray-200">
-                                            <button
-                                                type="button"
-                                                onClick={() => setSelectedProject(null)}
-                                                className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={saveProjectDetails}
-                                                className="ml-4 inline-flex justify-center rounded-md bg-[#0f172a] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f172a]"
-                                            >
-                                                <Save className="h-4 w-4 mr-2" />
-                                                Save Changes
-                                            </button>
                                         </div>
                                     </div>
+                                )}
+
+                                <hr className="border-gray-200" />
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div>
+                                        <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">Project Status</label>
+                                        <select
+                                            id="status"
+                                            value={editStatus}
+                                            onChange={(e) => setEditStatus(e.target.value)}
+                                            className="block w-full rounded-md border-gray-300 py-2.5 pl-3 pr-10 text-base focus:border-[#0f172a] focus:outline-none focus:ring-[#0f172a] sm:text-sm border shadow-sm"
+                                        >
+                                            <option value="New">New</option>
+                                            <option value="Contacted">Contacted</option>
+                                            <option value="Assigned">Assigned</option>
+                                            <option value="Dead">Dead</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">Internal Notes</label>
+                                        <textarea
+                                            id="notes"
+                                            rows={4}
+                                            value={editNotes}
+                                            onChange={(e) => setEditNotes(e.target.value)}
+                                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#0f172a] focus:ring-[#0f172a] sm:text-sm p-3 border"
+                                            placeholder="Add important notes here..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <hr className="border-gray-200" />
+
+                                <div>
+                                    <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                                        <Users className="h-5 w-5 text-gray-500" />
+                                        Assign Leads
+                                    </h3>
+
+                                    <div className="flex gap-3 max-w-lg">
+                                        <select
+                                            value={selectedBuilderToAssign}
+                                            onChange={(e) => setSelectedBuilderToAssign(e.target.value)}
+                                            className="block w-full rounded-md border-gray-300 py-2.5 pl-3 pr-10 text-base focus:border-[#0f172a] focus:outline-none focus:ring-[#0f172a] sm:text-sm border shadow-sm"
+                                        >
+                                            <option value="" disabled>Select a builder...</option>
+                                            {builders.filter(b => b.availability).map(b => (
+                                                <option key={b.id} value={b.id}>{b.companyName} ({b.companyId})</option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            type="button"
+                                            onClick={assignLead}
+                                            disabled={!selectedBuilderToAssign}
+                                            className="inline-flex justify-center rounded-md bg-[#0284c7] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#0369a1] disabled:opacity-50"
+                                        >
+                                            Assign
+                                        </button>
+                                    </div>
+
+                                    {projectAssignments.length > 0 && (
+                                        <div className="mt-6">
+                                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Currently Assigned</h4>
+                                            <ul className="space-y-3 max-w-3xl">
+                                                {projectAssignments.map(assignment => {
+                                                    const bData = builders.find(b => b.id === assignment.builderId);
+                                                    return (
+                                                        <li key={assignment.id} className="text-sm flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                            <span className="font-medium text-[#0f172a]">{bData ? bData.companyName : 'Unknown Builder'}</span>
+                                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${assignment.status === 'Accepted' ? 'border-green-200 bg-green-50 text-green-700' : 'border-gray-200 bg-white text-gray-600'}`}>
+                                                                {assignment.status}
+                                                            </span>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
-                    </div>
+
+                        <div className="flex flex-shrink-0 justify-end px-6 py-4 bg-gray-50 border-t border-gray-200 gap-3">
+                            <button
+                                type="button"
+                                onClick={closeProject}
+                                className="rounded-md bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={saveProjectDetails}
+                                className="inline-flex justify-center items-center rounded-md bg-[#0f172a] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f172a]"
+                            >
+                                <Save className="h-4 w-4 mr-2" />
+                                Save Changes
+                            </button>
+                        </div>
+                    </>
                 )}
+            </div>
 
             {/* Sync Date Modal */}
             {showSyncModal && (
