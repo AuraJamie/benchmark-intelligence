@@ -15,7 +15,7 @@ function parseDetailPages(htmlList) {
 
     for (const html of htmlList) {
         const $ = cheerio.load(html);
-        const rows = $('#simpleDetailsTable tr');
+        const rows = $('table tr');
         console.log(`    Table rows found: ${rows.length}`);
 
         rows.each((i, row) => {
@@ -174,11 +174,15 @@ export async function runScraper(targetWeekOverride = null) {
                 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
                 // Jump into specific result
-                await sleep(1500);
-                await Promise.all([
-                    mainPage.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 25000 }).catch(() => { }),
-                    mainPage.evaluate((index) => document.querySelectorAll('#searchresults .searchresult')[index].querySelector('a').click(), i)
-                ]);
+                await sleep(1000);
+                try {
+                    await Promise.all([
+                        mainPage.waitForNavigation({ waitUntil: 'networkidle2' }),
+                        mainPage.evaluate((index) => document.querySelectorAll('#searchresults .searchresult')[index].querySelector('a').click(), i)
+                    ]);
+                } catch (err) {
+                    console.warn(`  Navigation err for summary table on ${keyVal}`);
+                }
 
                 let summaryHtml = '';
                 try {
@@ -192,9 +196,11 @@ export async function runScraper(targetWeekOverride = null) {
                 let furtherInfoHtml = '';
                 try {
                     await sleep(1000);
-                    const detailsUrl = detailUrl.replace('activeTab=summary', 'activeTab=details');
-                    await mainPage.goto(detailsUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
-                    await mainPage.waitForSelector('#simpleDetailsTable tr', { timeout: 8000 });
+                    // Native click instead of goto to preserve session WAF state
+                    await Promise.all([
+                        mainPage.waitForNavigation({ waitUntil: 'networkidle2' }),
+                        mainPage.click('#subtab_details')
+                    ]);
                     furtherInfoHtml = await mainPage.content();
                 } catch (err) {
                     console.warn(`  Could not load further info tab for ${keyVal}: ${err.message}`);
@@ -273,11 +279,15 @@ export async function runScraper(targetWeekOverride = null) {
                 }
 
                 // Navigate back safely using the portal's back link
+                await sleep(1000);
                 const content = await mainPage.content();
                 const $h = cheerio.load(content);
                 const backUrl = $h('a:contains("search results")').attr('href');
                 if (backUrl) {
-                    await mainPage.goto('https://planningaccess.york.gov.uk' + backUrl, { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => { });
+                    await Promise.all([
+                        mainPage.waitForNavigation({ waitUntil: 'networkidle2' }),
+                        mainPage.goto('https://planningaccess.york.gov.uk' + backUrl, { waitUntil: 'networkidle2' })
+                    ]);
                 } else {
                     await mainPage.goBack();
                     await mainPage.goBack();
@@ -294,7 +304,7 @@ export async function runScraper(targetWeekOverride = null) {
             });
 
             if (hasNext) {
-                await mainPage.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => { });
+                await mainPage.waitForNavigation({ waitUntil: 'networkidle2' });
                 pageNum++;
             } else {
                 hasNextPage = false;
