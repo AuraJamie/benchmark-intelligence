@@ -1,4 +1,5 @@
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
 import { db } from './admin.js';
@@ -70,9 +71,14 @@ export async function runScraper(targetWeekOverride = null) {
     try {
         console.log("Starting scraper...");
 
+        const executablePath = await chromium.executablePath();
+        console.log("Launching headless browser... Executable:", executablePath);
+
         browser = await puppeteer.launch({
-            headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--single-process'],
+            defaultViewport: chromium.defaultViewport,
+            executablePath: executablePath || undefined,
+            headless: 'new', // Using 'new' headless instead of boolean for better rendering
         });
 
         const mainPage = await browser.newPage();

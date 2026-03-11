@@ -200,105 +200,36 @@ const Dashboard = () => {
 
     const triggerSync = async () => {
         setShowSyncModal(false);
-        let token = localStorage.getItem('github_sync_token');
-
-        if (!token) {
-            token = prompt("Please enter your GitHub Personal Access Token (with 'workflow' scope) to trigger the sync manually.\n\nIt will be saved securely in your browser:");
-            if (!token) return;
-            localStorage.setItem('github_sync_token', token);
-        }
-
-        const owner = 'AuraJamie';
-        const repo = 'benchmark-intelligence';
-
         setSyncing(true);
         setSyncStatus('waiting');
         setSyncReport(null);
 
-        // Record the time we started the sync to find the log entry generated after this
-        const syncStartTime = Date.now();
-
         try {
-            const bodyPayload = { ref: 'main' };
+            const fetchUrl = new URL('https://us-central1-benchmark-intelligence-a5b7c.cloudfunctions.net/triggerSync');
             if (selectedSyncDate !== 'current') {
-                bodyPayload.inputs = { targetWeek: selectedSyncDate };
+                fetchUrl.searchParams.append('targetWeek', selectedSyncDate);
             }
 
-            const response = await fetch(
-                `https://api.github.com/repos/${owner}/${repo}/actions/workflows/scraper.yml/dispatches`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/vnd.github+json',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(bodyPayload),
+            const response = await fetch(fetchUrl.toString(), {
+                method: 'GET', // Changed to GET or POST depending on how we hit the onRequest
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data) {
+                    setSyncReport(data.data);
+                    setSyncStatus('success');
+                } else {
+                    setSyncStatus('error');
                 }
-            );
-
-            if (response.status === 204) {
-                const q = query(
-                    collection(db, 'scraper_logs'),
-                    orderBy('timestamp', 'desc'),
-                    limit(1)
-                );
-
-                let unsubscribe;
-                let timeoutId;
-
-                unsubscribe = onSnapshot(q, (snapshot) => {
-                    if (snapshot.empty) return;
-                    const logData = snapshot.docs[0].data();
-
-                    // Convert Firestore Timestamp -> ms
-                    let logTime = 0;
-                    if (logData.timestamp && typeof logData.timestamp.toMillis === 'function') {
-                        logTime = logData.timestamp.toMillis();
-                    } else if (logData.timestamp instanceof Date) {
-                        logTime = logData.timestamp.getTime();
-                    } else if (logData.timestamp) {
-                        logTime = new Date(logData.timestamp).getTime();
-                    }
-
-                    // Accept any log written within 30s of when we triggered (generous clock drift buffer)
-                    const isNewLog = logTime > (syncStartTime - 30000);
-                    console.log(`Listener fired. logTime=${logTime}, syncStartTime=${syncStartTime}, diff=${logTime - syncStartTime}ms, isNewLog=${isNewLog}`);
-
-                    if (isNewLog) {
-                        clearTimeout(timeoutId);
-                        unsubscribe();
-                        setSyncReport(logData);
-                        setSyncStatus('success');
-                        setSyncing(false);
-                    }
-                });
-
-                // Fail-safe: if no log appears in 10 minutes, stop waiting
-                timeoutId = setTimeout(() => {
-                    unsubscribe();
-                    setSyncing(prevSyncing => {
-                        if (prevSyncing) {
-                            setSyncStatus('error');
-                            return false;
-                        }
-                        return prevSyncing;
-                    });
-                }, 600000);
-
             } else {
-                const err = await response.json();
-                console.error('GitHub Actions error:', err);
-                if (err.message === 'Bad credentials') {
-                    localStorage.removeItem('github_sync_token');
-                    alert("Invalid GitHub Token. Please generate a new one at https://github.com/settings/tokens/new with the 'workflow' scope and try again.");
-                }
+                console.error('Firebase Function error:', response.status);
                 setSyncStatus('error');
-                setSyncing(false);
             }
         } catch (error) {
-            console.error('Sync failed:', error);
+            console.error('Trigger sync failed:', error);
             setSyncStatus('error');
+        } finally {
             setSyncing(false);
         }
     };

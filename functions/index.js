@@ -3,7 +3,7 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { runScraper } from "./scraper.js";
 
 // Manually callable endpoint for the dashboard
-export const triggerSync = onRequest({ cors: true, timeoutSeconds: 300, memory: "1GiB" }, async (req, res) => {
+export const triggerSync = onRequest({ cors: true, timeoutSeconds: 540, memory: "2GiB" }, async (req, res) => {
     try {
         const targetWeek = req.query.targetWeek || req.body.targetWeek || null;
         const results = await runScraper(targetWeek);
@@ -17,8 +17,8 @@ export const triggerSync = onRequest({ cors: true, timeoutSeconds: 300, memory: 
 // Automatic scheduled endpoint (runs every Friday at 5:00 PM)
 export const scheduledSync = onSchedule({
     schedule: "0 17 * * 5",
-    timeoutSeconds: 300,
-    memory: "1GiB",
+    timeoutSeconds: 540,
+    memory: "2GiB",
     timeZone: "Europe/London"
 }, async (event) => {
     try {
