@@ -35,6 +35,7 @@ const generateWBDates = (weeksBack = 52) => {
 };
 
 const Projects = () => {
+    const [loading, setLoading] = useState(true);
     const [projects, setProjects] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedProject, setSelectedProject] = useState(null);
