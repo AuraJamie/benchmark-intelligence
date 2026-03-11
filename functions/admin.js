@@ -6,9 +6,10 @@ import { fileURLToPath } from 'url';
 
 // In development, load env vars. In production, Firebase Functions handles this automatically.
 const __dirname = dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: join(__dirname, '.env') });
+dotenv.config({ path: join(__dirname, '.env.local') });
 
-// Default initializeApp without arguments uses the GOOGLE_APPLICATION_CREDENTIALS environment variable
+// Default initializeApp without arguments uses the Application Default Credentials
+delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     console.log("Initializing Firebase with Service Account from ENV...");
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);

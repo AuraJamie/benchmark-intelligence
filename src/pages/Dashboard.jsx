@@ -344,12 +344,12 @@ const Dashboard = () => {
                 {syncing && (
                     <div className="mb-6 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800 flex items-center gap-3">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>The scraper is currently running on GitHub. This usually takes 1-2 minutes. Results will appear here automatically...</span>
+                        <span>The scraper is currently running. This usually takes 1-2 minutes. Results will appear here automatically...</span>
                     </div>
                 )}
                 {syncStatus === 'error' && !syncing && (
                     <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 flex justify-between items-center">
-                        <span>✗ Sync failed or timed out. Please check your GitHub token and repository actions status.</span>
+                        <span>✗ Sync failed or timed out. Please try again later.</span>
                         <button onClick={() => setSyncStatus(null)} className="text-red-400 hover:text-red-600">
                             <X className="h-4 w-4" />
                         </button>
