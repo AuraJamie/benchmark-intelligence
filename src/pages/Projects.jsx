@@ -1,4 +1,4 @@
-import { Search, Plus, Loader2, Network, UserPlus, Phone, Mail, Building, Activity, X, MapPin, ExternalLink, ClipboardList, ChevronLeft, ChevronRight, Filter, Receipt, FileText, User, Map as MapIcon, List, Users, Save, CheckCircle2, ArrowUpDown } from 'lucide-react';
+import { Search, Plus, Loader2, Network, UserPlus, Phone, Mail, Building, Activity, X, MapPin, ExternalLink, ClipboardList, ChevronLeft, ChevronRight, Filter, Receipt, FileText, User, Map as MapIcon, List, Users, Save, CheckCircle2, ArrowUpDown, Archive } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { db } from '../firebase';
@@ -73,6 +73,7 @@ const Projects = () => {
     const [sortBy, setSortBy] = useState('dateDecidedDesc');
     const STATUS_OPTIONS = ['New', 'Pack Required', 'Pack Created', 'Pack Sent', 'Quoted', 'Won', 'Paid', 'Archive'];
     const [filterStatus, setFilterStatus] = useState('All');
+    const [showArchive, setShowArchive] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 20;
 
@@ -183,7 +184,9 @@ const Projects = () => {
             p.applicationStatus?.toLowerCase().includes(searchTerms) ||
             p.homeownerEmail?.toLowerCase().includes(searchTerms);
 
-        const matchesStatus = filterStatus === 'All' || p.status === filterStatus;
+        const matchesStatus = filterStatus === 'All'
+            ? (showArchive ? true : p.status !== 'Archive')
+            : p.status === filterStatus;
         return matchesSearch && matchesStatus;
     });
 
@@ -329,6 +332,13 @@ const Projects = () => {
                             <MapIcon className="h-3.5 w-3.5" /> Map
                         </button>
                     </div>
+                    <button
+                        onClick={() => setShowArchive(!showArchive)}
+                        className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all border ${showArchive ? 'bg-amber-50 border-amber-200 text-amber-700 shadow-inner' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 shadow-sm'}`}
+                    >
+                        <Archive className={`h-4 w-4 ${showArchive ? 'text-amber-500' : 'text-gray-400'}`} />
+                        {showArchive ? 'Showing Archive' : 'View Archive'}
+                    </button>
                     <button onClick={() => setShowSyncModal(true)} disabled={syncing} className="flex items-center gap-2 rounded-lg bg-[#0f172a] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-black disabled:opacity-50">
                         {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4 text-blue-400" />}
                         {syncing ? 'Scraping...' : 'Sync Data'}
@@ -441,10 +451,10 @@ const Projects = () => {
                                                 <td className="px-6 py-4 truncate max-w-xs" title={project.description}>{project.description}</td>
                                                 <td className="px-6 py-4">
                                                     <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border ${project.status === 'Won' ? 'border-green-200 bg-green-50 text-green-700' :
-                                                            project.status === 'Archive' ? 'border-gray-200 bg-gray-50 text-gray-700' :
-                                                                project.status === 'Paid' ? 'border-purple-200 bg-purple-50 text-purple-700' :
-                                                                    project.status === 'Quoted' ? 'border-blue-200 bg-blue-50 text-blue-700' :
-                                                                        'border-yellow-200 bg-yellow-50 text-yellow-700'
+                                                        project.status === 'Archive' ? 'border-gray-200 bg-gray-50 text-gray-700' :
+                                                            project.status === 'Paid' ? 'border-purple-200 bg-purple-50 text-purple-700' :
+                                                                project.status === 'Quoted' ? 'border-blue-200 bg-blue-50 text-blue-700' :
+                                                                    'border-yellow-200 bg-yellow-50 text-yellow-700'
                                                         }`}>{project.status || 'New'}</span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-gray-500">{project.dateDecided ? new Date(project.dateDecided).toLocaleDateString() : 'N/A'}</td>

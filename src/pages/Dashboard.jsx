@@ -164,11 +164,11 @@ const Dashboard = () => {
             <div className="flex-1 overflow-auto pb-6 w-full">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 w-full max-w-7xl">
                     {/* Stat Cards */}
-                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                    <div className="bg-blue-50 p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
                         <div className="bg-blue-50 p-3 rounded-lg"><Home className="h-6 w-6 text-blue-600" /></div>
                         <div>
-                            <p className="text-sm font-medium text-gray-500">Total Projects</p>
-                            <p className="text-2xl font-semibold text-gray-900">{stats.totalProjects}</p>
+                            <p className="text-sm font-medium text-gray-500">New Projects</p>
+                            <p className="text-2xl font-semibold text-gray-900">{stats.statusCounts.New}</p>
                         </div>
                     </div>
                     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
