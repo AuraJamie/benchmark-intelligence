@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Map as MapIcon, Users, LogOut, Loader2, Network, ClipboardList } from 'lucide-react';
+import { Home, Map as MapIcon, Users, LogOut, Loader2, Network, ClipboardList, LayoutDashboard, FileSignature, Receipt } from 'lucide-react';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 
@@ -11,8 +11,11 @@ const Sidebar = () => {
     };
 
     const navItems = [
-        { label: 'Projects', icon: Home, path: '/' },
+        { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
+        { label: 'Projects', icon: Home, path: '/projects' },
         { label: 'Builders', icon: Users, path: '/builders' },
+        { label: 'Contracts', icon: FileSignature, path: '/contracts' },
+        { label: 'Invoices', icon: Receipt, path: '/invoices' },
         { label: 'Capture Form', icon: ClipboardList, path: '/capture', external: true },
     ];
 

@@ -1,8 +1,11 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Projects from './pages/Projects';
 import Capture from './pages/Capture';
 import Builders from './pages/Builders';
+import Contracts from './pages/Contracts';
+import Invoices from './pages/Invoices';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -23,10 +26,18 @@ function App() {
                     }
                 />
                 <Route
+                    path="/projects"
+                    element={
+                        <ProtectedRoute>
+                            <Projects />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
                     path="/map"
                     element={
                         <ProtectedRoute>
-                            <Dashboard />
+                            <Projects />
                         </ProtectedRoute>
                     }
                 />
@@ -35,6 +46,22 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <Builders />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/contracts"
+                    element={
+                        <ProtectedRoute>
+                            <Contracts />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/invoices"
+                    element={
+                        <ProtectedRoute>
+                            <Invoices />
                         </ProtectedRoute>
                     }
                 />
