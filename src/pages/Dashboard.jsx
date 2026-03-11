@@ -559,7 +559,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Full Page Slide-over for Project Details */}
-                <div className={`absolute inset-0 z-[60] bg-white flex flex-col transform transition-transform duration-500 ease-out ${selectedProject ? 'translate-x-0' : 'translate-x-full'} ${!activeProject ? 'hidden' : ''}`}>
+                <div className={`absolute inset-0 z-[60] bg-white flex flex-col transform transition-transform duration-500 ease-out shadow-2xl ${selectedProject ? 'translate-x-0' : 'translate-x-full'}`}>
                     {activeProject && (
                         <>
                             <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center shrink-0">

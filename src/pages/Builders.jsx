@@ -218,7 +218,7 @@ const Builders = () => {
             </div>
 
             {/* Full Page Add Builder panel */}
-            <div className={`absolute inset-0 z-[60] bg-white flex flex-col transform transition-transform duration-500 ease-out ${isAdding ? 'translate-x-0' : 'translate-x-full'} ${!showAddForm ? 'hidden' : ''}`}>
+            <div className={`absolute inset-0 z-[60] bg-white flex flex-col transform transition-transform duration-500 ease-out shadow-2xl ${isAdding ? 'translate-x-0' : 'translate-x-full'}`}>
                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
                     <h3 className="text-xl font-semibold text-[#0f172a]">Add New Builder</h3>
                     <button onClick={closeAddBuilder} className="text-gray-400 hover:text-gray-600 focus:outline-none p-2 rounded-full hover:bg-gray-200 transition-colors">
@@ -265,7 +265,7 @@ const Builders = () => {
             </div>
 
             {/* Full Page Slide-over Panel for Builder Profile */}
-            <div className={`absolute inset-0 z-[60] bg-white flex flex-col transform transition-transform duration-500 ease-out ${selectedBuilder ? 'translate-x-0' : 'translate-x-full'} ${!activeBuilder ? 'hidden' : ''}`}>
+            <div className={`absolute inset-0 z-[60] bg-white flex flex-col transform transition-transform duration-500 ease-out shadow-2xl ${selectedBuilder ? 'translate-x-0' : 'translate-x-full'}`}>
                 {activeBuilder && (
                     <>
                         <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center shrink-0">
