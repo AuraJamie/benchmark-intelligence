@@ -1,6 +1,7 @@
 import { onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { runScraper } from "./scraper.js";
+import { finalizeContract } from "./contractHandler.js";
 
 // Manually callable endpoint for the dashboard
 export const scraper = onRequest({
@@ -40,5 +41,40 @@ export const scheduledSync = onSchedule({
         console.log("Scheduled sync completed successfully.");
     } catch (error) {
         console.error("Scheduled sync failed:", error);
+    }
+});
+
+// Finalize and Sign Contract
+export const signContract = onRequest({
+    region: "europe-west2",
+    cors: true,
+    timeoutSeconds: 120,
+    memory: "1GiB"
+}, async (req, res) => {
+    if (req.method !== 'POST') {
+        return res.status(405).send('Method Not Allowed');
+    }
+
+    const { agreementId, signatureData } = req.body;
+    if (!agreementId || !signatureData) {
+        return res.status(400).json({ error: "Missing agreementId or signatureData" });
+    }
+
+    try {
+        // Capture metadata
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+        const userAgent = req.headers['user-agent'] || 'unknown';
+
+        const result = await finalizeContract({ 
+            agreementId, 
+            signatureData, 
+            ip, 
+            userAgent 
+        });
+
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("SignContract Error:", error);
+        res.status(500).json({ error: error.message });
     }
 });
