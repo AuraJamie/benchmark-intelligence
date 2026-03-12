@@ -8,13 +8,32 @@ service cloud.firestore {
     }
     
     match /projects/{projectId} {
-      // Allow public to get a single project by ID (for the capture form)
       allow get: if true;
       allow list: if request.auth != null;
-      // Allow public to update only the status to 'Contacted'
       allow update: if request.auth != null || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) 
                     && request.resource.data.status == 'Contacted');
       allow create, delete: if request.auth != null;
+    }
+
+    match /agreements/{agreementId} {
+      allow get: if true;
+      allow update: if request.auth != null || (
+          // Allow public signing: must only change signature/status/audit info
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'dateSigned', 'signatureData', 'auditTrail'])
+          && request.resource.data.status == 'Signed'
+          && resource.data.status == 'Pending'
+      );
+      allow list, create, delete: if request.auth != null;
+    }
+
+    match /builders/{builderId} {
+      allow get: if true;
+      allow list, create, update, delete: if request.auth != null;
+    }
+
+    match /contractVersions/{versionId} {
+      allow get: if true;
+      allow list, create, update, delete: if request.auth != null;
     }
 
     match /{document=**} {

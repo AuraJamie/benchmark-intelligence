@@ -193,3 +193,17 @@ Code cleanup (extracting repeated UI elements into reusable components).
 
 Setup GitHub Actions for continuous deployment to GitHub Pages.
 📍 FINAL CHECKPOINT: End-to-end system test. Ensure automated scraping works, staff can manage data, homeowners can submit data, and builders can be assigned seamlessly in a production environment.
+
+Phase 7: Legally Binding Contract Signing System
+
+1. Build Versioned Templates: Implement a rich-text contract boilerplate editor with autofill placeholders (e.g., {{companyName}}).
+
+2. Public eSign Portal: Create a secure, non-authenticated route (/sign/:id/:token) for builders to sign agreements.
+
+3. Digital Signature Pad: Integrate a canvas-based signature pad for capturing hand-drawn signatures.
+
+4. Audit Trail & UK Compliance: Implement logging for signing events (Time, IP-hash, UserAgent) to comply with the Electronic Communications Act 2000.
+
+5. PDF Generation & Archive: Add client-side PDF generation to download and distribute executed agreements.
+
+📍 CHECKPOINT 6: Issue a test contract to a builder. Copy the secure link. Sign the contract as the builder. Verify the signature is stored and a professional PDF can be generated.

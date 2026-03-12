@@ -6,6 +6,7 @@ import Capture from './pages/Capture';
 import Builders from './pages/Builders';
 import Contracts from './pages/Contracts';
 import Invoices from './pages/Invoices';
+import SignContract from './pages/SignContract';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
                 {/* Public Routes */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/capture" element={<Capture />} />
+                <Route path="/sign/:agreementId/:accessKey" element={<SignContract />} />
 
                 {/* Protected Routes */}
                 <Route

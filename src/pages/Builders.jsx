@@ -27,6 +27,7 @@ const Builders = () => {
     const [newBuilder, setNewBuilder] = useState({
         companyId: '',
         companyName: '',
+        companyAddress: '',
         ownerName: '',
         phone: '',
         email: '',
@@ -108,7 +109,7 @@ const Builders = () => {
                 createdAt: serverTimestamp()
             });
             setIsAdding(false);
-            setNewBuilder({ companyId: '', companyName: '', ownerName: '', phone: '', email: '', availability: true });
+            setNewBuilder({ companyId: '', companyName: '', companyAddress: '', ownerName: '', phone: '', email: '', availability: true });
         } catch (error) {
             console.error("Error adding builder:", error);
             alert("Failed to add builder");
@@ -339,6 +340,7 @@ const Builders = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div><label className="block text-sm font-bold text-gray-700 mb-2">Company ID (CRO/UTR)</label><input type="text" required value={newBuilder.companyId} onChange={(e) => setNewBuilder({ ...newBuilder, companyId: e.target.value })} className="w-full rounded-lg border border-gray-300 py-3 px-4 text-sm focus:border-[#0f172a] focus:ring-[#0f172a]" placeholder="e.g. 12345678" /></div>
                             <div><label className="block text-sm font-bold text-gray-700 mb-2">Company Name</label><input type="text" required value={newBuilder.companyName} onChange={(e) => setNewBuilder({ ...newBuilder, companyName: e.target.value })} className="w-full rounded-lg border border-gray-300 py-3 px-4 text-sm focus:border-[#0f172a] focus:ring-[#0f172a]" placeholder="e.g. Acme Construction Ltd" /></div>
+                            <div className="md:col-span-2"><label className="block text-sm font-bold text-gray-700 mb-2">Company Address</label><textarea required value={newBuilder.companyAddress} onChange={(e) => setNewBuilder({ ...newBuilder, companyAddress: e.target.value })} className="w-full rounded-lg border border-gray-300 py-3 px-4 text-sm focus:border-[#0f172a] focus:ring-[#0f172a]" placeholder="e.g. 123 High St, London, SW1A 1AA" rows={2} /></div>
                             <div><label className="block text-sm font-bold text-gray-700 mb-2">Contact Person Name</label><input type="text" required value={newBuilder.ownerName} onChange={(e) => setNewBuilder({ ...newBuilder, ownerName: e.target.value })} className="w-full rounded-lg border border-gray-300 py-3 px-4 text-sm focus:border-[#0f172a] focus:ring-[#0f172a]" placeholder="e.g. John Doe" /></div>
                             <div><label className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label><input type="tel" required value={newBuilder.phone} onChange={(e) => setNewBuilder({ ...newBuilder, phone: e.target.value })} className="w-full rounded-lg border border-gray-300 py-3 px-4 text-sm focus:border-[#0f172a] focus:ring-[#0f172a]" placeholder="e.g. +44 20 1234 5678" /></div>
                             <div className="md:col-span-2"><label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label><input type="email" required value={newBuilder.email} onChange={(e) => setNewBuilder({ ...newBuilder, email: e.target.value })} className="w-full rounded-lg border border-gray-300 py-3 px-4 text-sm focus:border-[#0f172a] focus:ring-[#0f172a]" placeholder="e.g. billing@acme.com" /></div>
