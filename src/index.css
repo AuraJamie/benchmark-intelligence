@@ -19,4 +19,13 @@
     background-color: var(--color-background);
     color: var(--color-primary);
   }
+
+  /* Robust word-wrapping for contract content across both views */
+  .contract-content, 
+  .prose-sm {
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
+    word-break: normal !important;
+    hyphens: auto;
+  }
 }

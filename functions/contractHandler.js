@@ -63,21 +63,27 @@ export async function finalizeContract({ agreementId, signatureData, ip, userAge
             <html>
             <head>
                 <style>
-                    body { font-family: 'Helvetica', 'Arial', sans-serif; line-height: 1.6; color: #1e293b; padding: 40px; margin: 0; }
-                    .header { border-bottom: 2px solid #0f172a; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
-                    .header h1 { margin: 0; color: #0f172a; font-size: 24px; }
-                    .header .meta { text-align: right; font-size: 10px; color: #64748b; }
-                    .content { margin-bottom: 40px; }
-                    .content h1, .content h2, .content h3 { color: #0f172a; }
-                    .signature-section { page-break-inside: avoid; margin-top: 50px; padding: 20px; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 8px; }
-                    .signature-box { margin-top: 15px; border: 1px solid #cbd5e1; background: #fff; height: 120px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-                    .signature-box img { max-height: 100px; max-width: 90%; }
-                    .audit-trail-page { page-break-before: always; padding-top: 20px; }
-                    .audit-header { border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px; }
-                    .audit-item { margin-bottom: 15px; display: flex; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
-                    .audit-label { width: 150px; font-weight: bold; font-size: 12px; color: #64748b; }
-                    .audit-value { flex: 1; font-size: 12px; color: #1e293b; word-break: break-all; }
-                    .seal { margin-top: 30px; display: flex; align-items: center; gap: 10px; color: #059669; font-weight: bold; font-size: 14px; }
+                    body { font-family: 'Helvetica', 'Arial', sans-serif; line-height: 1.6; color: #1e293b; padding: 30px; margin: 0; font-size: 11pt; }
+                    .header { border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
+                    .header h1 { margin: 0; color: #0f172a; font-size: 22pt; }
+                    .header .meta { text-align: right; font-size: 8pt; color: #64748b; }
+                    .content { margin-bottom: 40px; overflow-wrap: break-word; word-wrap: break-word; word-break: normal; }
+                    .content h1, .content h2, .content h3 { color: #0f172a; margin-top: 20px; }
+                    .content p, .content li { margin-bottom: 10pt; }
+                    .signature-section { page-break-inside: avoid; margin-top: 40px; padding: 20px; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 8px; }
+                    .signature-box { margin-top: 15px; border: 1px solid #cbd5e1; background: #fff; height: 100px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+                    .signature-box img { max-height: 80px; max-width: 90%; }
+                    
+                    /* Digital Execution Record Page styling */
+                    .audit-trail-page { page-break-before: always; padding: 20px 0; }
+                    .audit-header { border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 25px; }
+                    .audit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+                    .audit-card { background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #f1f5f9; }
+                    .audit-label { font-size: 8pt; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
+                    .audit-value { font-size: 10pt; color: #1e293b; word-break: break-all; }
+                    .seal-box { margin-top: 40px; padding: 25px; background: #fcfdfd; border: 1px solid #f1f5f9; border-radius: 8px; text-align: center; }
+                    .seal { display: inline-flex; align-items: center; gap: 8px; color: #059669; font-weight: bold; font-size: 12pt; margin-bottom: 10px; }
+                    .legal-note { font-size: 8pt; color: #94a3b8; line-height: 1.4; max-width: 500px; margin: 0 auto; }
                 </style>
             </head>
             <body>
@@ -111,47 +117,44 @@ export async function finalizeContract({ agreementId, signatureData, ip, userAge
 
                 <div class="audit-trail-page">
                     <div class="audit-header">
-                        <h2 style="margin: 0; color: #0f172a;">Digital Audit Trail</h2>
-                        <p style="margin: 5px 0 0 0; font-size: 11px; color: #64748b;">Execution Proof & Record Retention Data</p>
+                        <h2 style="margin: 0; color: #0f172a; font-size: 16pt;">Digital Execution Record</h2>
+                        <p style="margin: 4px 0 0 0; font-size: 9pt; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Cryptographically Verified Execution Proof</p>
                     </div>
-
-                    <div class="audit-item">
-                        <div class="audit-label">Reference ID</div>
-                        <div class="audit-value">${refId}</div>
+ 
+                    <div class="audit-grid">
+                        <div class="audit-card">
+                            <div class="audit-label">Authorized Signatory</div>
+                            <div class="audit-value">${builder.ownerName}</div>
+                        </div>
+                        <div class="audit-card">
+                            <div class="audit-label">Company / Entity</div>
+                            <div class="audit-value">${builder.companyName}</div>
+                        </div>
+                        <div class="audit-card">
+                            <div class="audit-label">Execution Reference</div>
+                            <div class="audit-value">${refId}</div>
+                        </div>
+                        <div class="audit-card">
+                            <div class="audit-label">Verification Timestamp (UTC)</div>
+                            <div class="audit-value">${utcTimestamp}</div>
+                        </div>
+                        <div class="audit-card" style="grid-column: span 2;">
+                            <div class="audit-label">Digital Footprint (IP & Agent)</div>
+                            <div class="audit-value">${ip} — ${userAgent.substring(0, 100)}${userAgent.length > 100 ? '...' : ''}</div>
+                        </div>
                     </div>
-                    <div class="audit-item">
-                        <div class="audit-label">Agreement ID</div>
-                        <div class="audit-value">${agreementId}</div>
+ 
+                    <div class="seal-box">
+                        <div class="seal">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                            COMPENSATION PROTECTED & TAMPER-SEALED
+                        </div>
+                        <p class="legal-note">
+                            This document is a legally binding electronic record as defined by the Electronics Communications Act 2000 (UK). 
+                            Any modification to this document after the recorded timestamp voids the digital seal integrity. 
+                            Benchmark Intelligence maintains the primary immutable audit record for this transaction.
+                        </p>
                     </div>
-                    <div class="audit-item">
-                        <div class="audit-label">Signatory Email</div>
-                        <div class="audit-value">${builder.email}</div>
-                    </div>
-                    <div class="audit-item">
-                        <div class="audit-label">IP Address</div>
-                        <div class="audit-value">${ip}</div>
-                    </div>
-                    <div class="audit-item">
-                        <div class="audit-label">Captured Timestamp</div>
-                        <div class="audit-value">${utcTimestamp}</div>
-                    </div>
-                    <div class="audit-item">
-                        <div class="audit-label">User Agent</div>
-                        <div class="audit-value">${userAgent}</div>
-                    </div>
-                    <div class="audit-item">
-                        <div class="audit-label">Consent Status</div>
-                        <div class="audit-value">Expressly Given & Verified</div>
-                    </div>
-
-                    <div class="seal">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
-                        TAMPER-EVIDENT DIGITAL SEAL APPLIED
-                    </div>
-                    <p style="font-size: 9px; color: #94a3b8; margin-top: 20px;">
-                        This document is a legally binding electronic record as defined by the Electronics Communications Act 2000 (UK) and ESIGN Act (US).
-                        Any alteration to this document after execution voids the digital seal integrity.
-                    </p>
                 </div>
             </body>
             </html>

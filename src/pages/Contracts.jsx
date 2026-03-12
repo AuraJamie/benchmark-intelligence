@@ -160,11 +160,11 @@ const Contracts = () => {
         element.style.fontFamily = 'Arial, sans-serif';
         element.innerHTML = `
             <style>
-                .pdf-body { line-height: 1.6; font-size: 14px; color: #333; overflow-wrap: break-word; word-wrap: break-word; word-break: normal; }
-                .pdf-body h1, .pdf-body h2, .pdf-body h3 { color: #0f172a; }
-                .pdf-body p, .pdf-body li { margin-bottom: 15px; page-break-inside: avoid; overflow-wrap: break-word; }
+                .pdf-body { line-height: 1.6; font-size: 13px; color: #333; overflow-wrap: break-word; word-wrap: break-word; word-break: normal; }
+                .pdf-body h1, .pdf-body h2, .pdf-body h3 { color: #0f172a; margin-top: 20px; margin-bottom: 10px; }
+                .pdf-body p, .pdf-body li { margin-bottom: 12px; page-break-inside: avoid; overflow-wrap: break-word; word-wrap: break-word; word-break: normal; }
                 .pdf-body table { width: 100%; border-collapse: collapse; margin: 20px 0; table-layout: fixed; }
-                .pdf-body td, .pdf-body th { border: 1px solid #eee; padding: 8px; overflow-wrap: break-word; }
+                .pdf-body td, .pdf-body th { border: 1px solid #eee; padding: 8px; overflow-wrap: break-word; word-wrap: break-word; word-break: normal; }
                 .signature-block { page-break-inside: avoid; border: 1px solid #eee; padding: 25px; background: #fafafa; border-radius: 12px; margin-top: 40px; }
                 .sig-img { max-height: 80px; width: auto; display: block; border: 0; }
             </style>
@@ -222,96 +222,96 @@ const Contracts = () => {
                 const pageWidth = pdf.internal.pageSize.getWidth();
                 const pageHeight = pdf.internal.pageSize.getHeight();
 
-                // Card container
-                const marginX = 0.75;
-                const marginY = 1;
-                const cardWidth = pageWidth - marginX * 2;
-                const cardHeight = pageHeight - marginY * 2;
+                // Minimal container
+                const marginX = 0.5;
+                const marginY = 0.6;
+                const contentWidth = pageWidth - marginX * 2;
 
-                pdf.setDrawColor(226, 232, 240); // border
-                pdf.setFillColor(248, 250, 252); // background
-                pdf.roundedRect(marginX, marginY, cardWidth, cardHeight, 0.15, 0.15, 'FD');
+                // Subtle Header
+                pdf.setDrawColor(15, 23, 42);
+                pdf.setLineWidth(0.015);
+                pdf.line(marginX, marginY, pageWidth - marginX, marginY);
 
                 // Heading
-                pdf.setFontSize(14);
-                pdf.setTextColor(100, 116, 139);
-                pdf.text('DIGITAL EXECUTION RECORD', marginX + 0.25, marginY + 0.6);
-
-                // Left column: details
-                const leftX = marginX + 0.35;
-                let cursorY = marginY + 1.2;
-                pdf.setFontSize(10);
-                pdf.setTextColor(100, 116, 139);
-                pdf.text('Authorized Signatory', leftX, cursorY);
-                cursorY += 0.2;
-                pdf.setFontSize(12);
+                pdf.setFontSize(16);
                 pdf.setTextColor(15, 23, 42);
-                pdf.text(builder?.ownerName || '', leftX, cursorY);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text('DIGITAL EXECUTION RECORD', marginX, marginY + 0.4);
 
-                cursorY += 0.5;
-                pdf.setFontSize(10);
-                pdf.setTextColor(100, 116, 139);
-                pdf.text('Timestamp (UTC)', leftX, cursorY);
-                cursorY += 0.2;
-                pdf.setFontSize(11);
-                pdf.setTextColor(15, 23, 42);
-                pdf.text(agreement.dateSigned.toDate().toUTCString(), leftX, cursorY);
+                // Meta section
+                let cursorY = marginY + 0.8;
+                
+                // Draw a separator line
+                pdf.setDrawColor(226, 232, 240);
+                pdf.line(marginX, cursorY, pageWidth - marginX, cursorY);
+                cursorY += 0.4;
+
+                // Details Grid
+                const col1 = marginX;
+                const col2 = marginX + (contentWidth / 2);
+
+                const drawDetail = (label, value, x, y) => {
+                    pdf.setFontSize(8);
+                    pdf.setTextColor(100, 116, 139);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.text(label.toUpperCase(), x, y);
+                    pdf.setFontSize(11);
+                    pdf.setTextColor(15, 23, 42);
+                    pdf.setFont('helvetica', 'normal');
+                    pdf.text(value || 'N/A', x, y + 0.22);
+                };
+
+                drawDetail('Authorized Signatory', builder?.ownerName, col1, cursorY);
+                drawDetail('Company / Entity', builder?.companyName, col2, cursorY);
+                
+                cursorY += 0.6;
+                drawDetail('Execution Timestamp (UTC)', agreement.dateSigned.toDate().toUTCString(), col1, cursorY);
+                drawDetail('Agreement Reference', `BRA-${agreement.id.substring(0, 8).toUpperCase()}`, col2, cursorY);
 
                 cursorY += 0.6;
-                pdf.setFontSize(8);
-                pdf.setTextColor(148, 163, 184);
-                const note =
-                    'This document was electronically signed in accordance with the Electronic Communications Act 2000 and represents a binding legal commitment.';
-                pdf.text(note, leftX, cursorY, { maxWidth: cardWidth * 0.55 });
+                drawDetail('IP Address', agreement.auditTrail?.ip || 'Verified', col1, cursorY);
+                drawDetail('Browser User-Agent', (agreement.auditTrail?.userAgent || 'Verified').substring(0, 60) + '...', col2, cursorY);
 
-                // Right column: signature box (TIDIER STYLE)
-                const boxWidth = cardWidth * 0.38;
-                const boxX = marginX + cardWidth - boxWidth - 0.35;
-                const boxY = marginY + 1.2;
-                const boxHeight = 1.8;
-
-                // Subtle shadow effect for the box
-                pdf.setDrawColor(241, 245, 249);
-                pdf.roundedRect(boxX + 0.05, boxY + 0.05, boxWidth, boxHeight, 0.12, 0.12, 'S');
-
-                // Main box
-                pdf.setDrawColor(226, 232, 240);
-                pdf.setFillColor(255, 255, 255);
-                pdf.roundedRect(boxX, boxY, boxWidth, boxHeight, 0.12, 0.12, 'DF');
-
-                // Label
-                pdf.setFontSize(8);
-                pdf.setTextColor(148, 163, 184);
-                pdf.setFont('helvetica', 'bold');
-                pdf.text('AUTHORIZED SIGNATURE', boxX + 0.2, boxY + 0.3);
-
-                // Add a subtle base line for the signature
-                pdf.setDrawColor(241, 245, 249);
-                pdf.setLineWidth(0.01);
-                pdf.line(boxX + 0.2, boxY + boxHeight - 0.4, boxX + boxWidth - 0.2, boxY + boxHeight - 0.4);
-
-                // Signature image inside box - optimized positioning
-                const sigPaddingX = 0.25;
-                const sigPaddingY = 0.45;
-                const sigW = boxWidth - sigPaddingX * 2;
-                const sigH = boxHeight - sigPaddingY - 0.4;
+                cursorY += 1.0;
                 
+                // Signature Block (Cleaner)
+                pdf.setDrawColor(241, 245, 249);
+                pdf.setFillColor(252, 253, 254);
+                pdf.roundedRect(marginX, cursorY, contentWidth, 2.2, 0.1, 0.1, 'FD');
+
+                pdf.setFontSize(9);
+                pdf.setTextColor(100, 116, 139);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text('FINALIZED DIGITAL SIGNATURE', marginX + 0.25, cursorY + 0.35);
+
+                // Signature image positioning
+                const sigBoxWidth = contentWidth - 1.0;
+                const sigBoxHeight = 1.4;
+                const sigX = marginX + (contentWidth - sigBoxWidth) / 2;
+                const sigY = cursorY + 0.5;
+
                 if (agreement.signatureData) {
                     pdf.addImage(
                         agreement.signatureData,
                         'PNG',
-                        boxX + sigPaddingX,
-                        boxY + sigPaddingY,
-                        sigW,
-                        sigH
+                        sigX,
+                        sigY,
+                        sigBoxWidth,
+                        sigBoxHeight
                     );
                 }
 
-                // Reference ID Footer on this page
+                cursorY += 2.6;
+                pdf.setFontSize(8);
+                pdf.setTextColor(148, 163, 184);
+                const note = 'This document was electronically signed and timestamped in accordance with the Electronic Communications Act 2000. This receipt serves as a permanent record of execution and intent to be legally bound.';
+                pdf.text(note, marginX, cursorY, { maxWidth: contentWidth });
+
+                // Footer
                 pdf.setFontSize(8);
                 pdf.setTextColor(203, 213, 225);
-                const footerText = `Document Reference: BRA-${agreement.id.substring(0, 8).toUpperCase()} | Digital Receipt Page`;
-                pdf.text(footerText, pageWidth / 2, pageHeight - 0.5, { align: 'center' });
+                const footerText = `Document Reference: BRA-${agreement.id.substring(0, 8).toUpperCase()} | Benchmark Intelligence Audit Receipt`;
+                pdf.text(footerText, pageWidth / 2, pageHeight - 0.4, { align: 'center' });
 
             }).then(() => {
                 worker.save();
