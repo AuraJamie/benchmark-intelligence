@@ -67,22 +67,22 @@ export async function finalizeContract({ agreementId, signatureData, ip, userAge
                     .header { border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
                     .header h1 { margin: 0; color: #0f172a; font-size: 22pt; }
                     .header .meta { text-align: right; font-size: 8pt; color: #64748b; }
-                    .content { margin-bottom: 40px; overflow-wrap: break-word; word-wrap: break-word; word-break: normal; }
+                    .content { margin-bottom: 40px; overflow-wrap: break-word; word-wrap: break-word; word-break: normal; white-space: normal; hyphens: auto; }
                     .content h1, .content h2, .content h3 { color: #0f172a; margin-top: 20px; }
                     .content p, .content li { margin-bottom: 10pt; }
                     .signature-section { page-break-inside: avoid; margin-top: 40px; padding: 20px; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 8px; }
-                    .signature-box { margin-top: 15px; border: 1px solid #cbd5e1; background: #fff; height: 100px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+                    .signature-box { margin-top: 15px; border: 1px solid #cbd5e1; background: #fff; min-height: 100px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
                     .signature-box img { max-height: 80px; max-width: 90%; }
                     
                     /* Digital Execution Record Page styling */
                     .audit-trail-page { page-break-before: always; padding: 20px 0; }
                     .audit-header { border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 25px; }
-                    .audit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-                    .audit-card { background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #f1f5f9; }
-                    .audit-label { font-size: 8pt; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
-                    .audit-value { font-size: 10pt; color: #1e293b; word-break: break-all; }
-                    .seal-box { margin-top: 40px; padding: 25px; background: #fcfdfd; border: 1px solid #f1f5f9; border-radius: 8px; text-align: center; }
-                    .seal { display: inline-flex; align-items: center; gap: 8px; color: #059669; font-weight: bold; font-size: 12pt; margin-bottom: 10px; }
+                    .audit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+                    .audit-card { background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #f1f5f9; display: flex; flex-direction: column; }
+                    .audit-label { font-size: 8pt; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
+                    .audit-value { font-size: 10pt; color: #1e293b; overflow-wrap: anywhere; word-wrap: break-word; word-break: normal; }
+                    .seal-box { margin-top: 20px; padding: 20px; background: #fcfdfd; border: 1px solid #f1f5f9; border-radius: 8px; text-align: center; }
+                    .seal { display: inline-flex; align-items: center; gap: 8px; color: #059669; font-weight: bold; font-size: 11pt; margin-bottom: 8px; }
                     .legal-note { font-size: 8pt; color: #94a3b8; line-height: 1.4; max-width: 500px; margin: 0 auto; }
                 </style>
             </head>
@@ -139,8 +139,17 @@ export async function finalizeContract({ agreementId, signatureData, ip, userAge
                             <div class="audit-value">${utcTimestamp}</div>
                         </div>
                         <div class="audit-card" style="grid-column: span 2;">
+                            <div class="audit-label">Digital Execution Signature</div>
+                            <div class="audit-value" style="background: white; border: 1px solid #eee; margin-top: 8px; padding: 10px; border-radius: 4px; display: flex; justify-content: center;">
+                                <img src="${signatureData}" style="max-height: 80px; max-width: 100%;">
+                            </div>
+                        </div>
+                        <div class="audit-card" style="grid-column: span 2;">
                             <div class="audit-label">Digital Footprint (IP & Agent)</div>
-                            <div class="audit-value">${ip} — ${userAgent.substring(0, 100)}${userAgent.length > 100 ? '...' : ''}</div>
+                            <div class="audit-value">
+                                <strong>IP:</strong> ${ip}<br>
+                                <strong>User Agent:</strong> ${userAgent}
+                            </div>
                         </div>
                     </div>
  

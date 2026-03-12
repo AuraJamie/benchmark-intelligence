@@ -22,10 +22,12 @@
 
   /* Robust word-wrapping for contract content across both views */
   .contract-content, 
-  .prose-sm {
-    overflow-wrap: break-word !important;
+  .prose-sm,
+  .prose {
+    overflow-wrap: anywhere !important;
     word-wrap: break-word !important;
     word-break: normal !important;
+    white-space: normal !important;
     hyphens: auto;
   }
 }

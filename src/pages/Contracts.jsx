@@ -250,34 +250,39 @@ const Contracts = () => {
                 const col1 = marginX;
                 const col2 = marginX + (contentWidth / 2);
 
-                const drawDetail = (label, value, x, y) => {
+                const drawDetail = (label, value, x, y, width) => {
                     pdf.setFontSize(8);
                     pdf.setTextColor(100, 116, 139);
                     pdf.setFont('helvetica', 'bold');
                     pdf.text(label.toUpperCase(), x, y);
-                    pdf.setFontSize(11);
+                    pdf.setFontSize(10);
                     pdf.setTextColor(15, 23, 42);
                     pdf.setFont('helvetica', 'normal');
-                    pdf.text(value || 'N/A', x, y + 0.22);
+                    
+                    const wrappedValue = pdf.splitTextToSize(value || 'N/A', width || (contentWidth / 2) - 0.2);
+                    pdf.text(wrappedValue, x, y + 0.2);
+                    return wrappedValue.length * 0.16 + 0.25; 
                 };
 
-                drawDetail('Authorized Signatory', builder?.ownerName, col1, cursorY);
-                drawDetail('Company / Entity', builder?.companyName, col2, cursorY);
-                
-                cursorY += 0.6;
-                drawDetail('Execution Timestamp (UTC)', agreement.dateSigned.toDate().toUTCString(), col1, cursorY);
-                drawDetail('Agreement Reference', `BRA-${agreement.id.substring(0, 8).toUpperCase()}`, col2, cursorY);
+                const h1 = drawDetail('Authorized Signatory', builder?.ownerName, col1, cursorY);
+                const h2 = drawDetail('Company / Entity', builder?.companyName, col2, cursorY);
+                cursorY += Math.max(h1, h2);
 
-                cursorY += 0.6;
-                drawDetail('IP Address', agreement.auditTrail?.ip || 'Verified', col1, cursorY);
-                drawDetail('Browser User-Agent', (agreement.auditTrail?.userAgent || 'Verified').substring(0, 60) + '...', col2, cursorY);
+                const h3 = drawDetail('Execution Timestamp (UTC)', agreement.dateSigned.toDate().toUTCString(), col1, cursorY);
+                const h4 = drawDetail('Agreement Reference', `BRA-${agreement.id.substring(0, 8).toUpperCase()}`, col2, cursorY);
+                cursorY += Math.max(h3, h4);
 
-                cursorY += 1.0;
+                const h5 = drawDetail('IP Address', agreement.auditTrail?.ip || 'Verified', col1, cursorY);
+                // Wrap User Agent across full width if it's long, or just give it more room
+                const h6 = drawDetail('Browser User-Agent', agreement.auditTrail?.userAgent || 'Verified', col2, cursorY, (contentWidth / 2) - 0.1);
+                cursorY += Math.max(h5, h6);
+
+                cursorY += 0.4;
                 
-                // Signature Block (Cleaner)
+                // Signature Block (Positioned after metadata)
                 pdf.setDrawColor(241, 245, 249);
                 pdf.setFillColor(252, 253, 254);
-                pdf.roundedRect(marginX, cursorY, contentWidth, 2.2, 0.1, 0.1, 'FD');
+                pdf.roundedRect(marginX, cursorY, contentWidth, 2.0, 0.1, 0.1, 'FD');
 
                 pdf.setFontSize(9);
                 pdf.setTextColor(100, 116, 139);
@@ -286,7 +291,7 @@ const Contracts = () => {
 
                 // Signature image positioning
                 const sigBoxWidth = contentWidth - 1.0;
-                const sigBoxHeight = 1.4;
+                const sigBoxHeight = 1.2;
                 const sigX = marginX + (contentWidth - sigBoxWidth) / 2;
                 const sigY = cursorY + 0.5;
 
