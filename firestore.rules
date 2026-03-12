@@ -18,10 +18,10 @@ service cloud.firestore {
     match /agreements/{agreementId} {
       allow get: if true;
       allow update: if request.auth != null || (
-          // Allow public signing: must only change signature/status/audit info
+          // Allow public audit logging (only auditTrail) OR full signing
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'dateSigned', 'signatureData', 'auditTrail'])
-          && request.resource.data.status == 'Signed'
           && resource.data.status == 'Pending'
+          && (request.resource.data.status == 'Signed' || request.resource.data.status == 'Pending')
       );
       allow list, create, delete: if request.auth != null;
     }

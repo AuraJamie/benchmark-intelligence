@@ -29,6 +29,7 @@ const Contracts = () => {
     const [showNewVersion, setShowNewVersion] = useState(false);
     const [showNewAgreement, setShowNewAgreement] = useState(false);
     const [signingAgreement, setSigningAgreement] = useState(null);
+    const [viewingVersion, setViewingVersion] = useState(null);
     const [viewingAgreement, setViewingAgreement] = useState(null);
 
     // Form States
@@ -124,7 +125,6 @@ const Contracts = () => {
 
         try {
             const accessKey = generateAccessKey();
-            const passcode = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
             await addDoc(collection(db, 'agreements'), {
                 builderId: selectedBuilderForAgreement,
                 versionId: selectedVersionForAgreement,
@@ -133,7 +133,11 @@ const Contracts = () => {
                 dateSigned: null,
                 signatureData: null,
                 accessKey: accessKey,
-                passcode: passcode
+                auditTrail: {
+                    linkOpenedAt: null,
+                    visitorIp: null,
+                    visitorUserAgent: null
+                }
             });
             setShowNewAgreement(false);
             setSelectedBuilderForAgreement('');
@@ -155,48 +159,83 @@ const Contracts = () => {
         element.style.padding = '40px';
         element.style.fontFamily = 'Arial, sans-serif';
         element.innerHTML = `
-            <div style="margin-bottom: 40px; border-bottom: 2px solid #0f172a; padding-bottom: 20px;">
-                <h1 style="color: #0f172a; margin: 0;">Benchmark Intelligence</h1>
-                <p style="color: #666; margin: 5px 0 0 0;">Licensed Contract Document - Executed</p>
+            <style>
+                .pdf-body { line-height: 1.6; font-size: 14px; color: #333; overflow-wrap: break-word; word-wrap: break-word; word-break: normal; }
+                .pdf-body h1, .pdf-body h2, .pdf-body h3 { color: #0f172a; }
+                .pdf-body p, .pdf-body li { margin-bottom: 15px; page-break-inside: avoid; overflow-wrap: break-word; }
+                .pdf-body table { width: 100%; border-collapse: collapse; margin: 20px 0; table-layout: fixed; }
+                .pdf-body td, .pdf-body th { border: 1px solid #eee; padding: 8px; overflow-wrap: break-word; }
+                .signature-block { page-break-inside: avoid; border: 1px solid #eee; padding: 25px; background: #fafafa; border-radius: 12px; margin-top: 40px; }
+                .sig-img { max-height: 80px; width: auto; display: block; border: 0; }
+            </style>
+            
+            <div style="margin-bottom: 40px; border-bottom: 3px solid #0f172a; padding-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h1 style="color: #0f172a; margin: 0; font-size: 28px;">Benchmark Intelligence</h1>
+                    <p style="color: #64748b; margin: 5px 0 0 0; font-weight: bold; text-transform: uppercase; font-size: 10px; tracking-widest: 1px;">Official Contract Document</p>
+                </div>
+                <div style="text-align: right;">
+                    <p style="margin: 0; font-size: 10px; color: #94a3b8;">Ref: BRA-${agreement.id.substring(0,8).toUpperCase()}</p>
+                </div>
             </div>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px;">
-                <div>
-                    <h3 style="color: #0f172a; font-size: 12px; text-transform: uppercase;">Builder Information</h3>
-                    <p style="margin: 5px 0;"><strong>${builder?.companyName}</strong></p>
-                    <p style="margin: 3px 0; font-size: 14px;">${builder?.ownerName}</p>
-                    <p style="margin: 3px 0; font-size: 14px;">${builder?.email}</p>
-                    <p style="margin: 3px 0; font-size: 14px;">${builder?.phone}</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 50px;">
+                <div style="background: #f8fafc; padding: 20px; border-radius: 12px;">
+                    <h3 style="color: #64748b; font-size: 10px; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px;">Signatory (Builder)</h3>
+                    <p style="margin: 5px 0; font-size: 16px;"><strong>${builder?.companyName}</strong></p>
+                    <p style="margin: 3px 0; font-size: 13px; color: #475569;">${builder?.ownerName}</p>
+                    <p style="margin: 3px 0; font-size: 13px; color: #475569;">${builder?.email}</p>
                 </div>
-                <div>
-                    <h3 style="color: #0f172a; font-size: 12px; text-transform: uppercase;">Contract Status</h3>
-                    <p style="margin: 5px 0;">Status: <strong>${agreement.status}</strong></p>
-                    <p style="margin: 3px 0; font-size: 14px;">Issued: ${agreement.dateIssued.toDate().toLocaleDateString()}</p>
-                    ${agreement.dateSigned ? `<p style="margin: 3px 0; font-size: 14px;">Signed: ${agreement.dateSigned.toDate().toLocaleString()}</p>` : ''}
+                <div style="background: #f8fafc; padding: 20px; border-radius: 12px;">
+                    <h3 style="color: #64748b; font-size: 10px; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px;">Execution Details</h3>
+                    <p style="margin: 5px 0; font-size: 14px;">Status: <strong style="color: ${agreement.status === 'Signed' ? '#16a34a' : '#d97706'}">${agreement.status}</strong></p>
+                    <p style="margin: 3px 0; font-size: 13px; color: #475569;">Issued: ${agreement.dateIssued.toDate().toLocaleDateString()}</p>
+                    ${agreement.dateSigned ? `<p style="margin: 3px 0; font-size: 13px; color: #475569;">Signed: ${agreement.dateSigned.toDate().toLocaleString()}</p>` : ''}
                 </div>
             </div>
 
-            <div style="margin-bottom: 60px; line-height: 1.6; font-size: 14px;">
+            <div class="pdf-body">
                 ${content}
             </div>
 
             ${agreement.status === 'Signed' ? `
-            <div style="page-break-inside: avoid; border: 1px solid #eee; padding: 20px; background: #fafafa; border-radius: 8px;">
-                <h3 style="margin-top: 0; font-size: 16px;">Executed Signature</h3>
-                <img src="${agreement.signatureData}" style="max-height: 100px; margin: 10px 0;" />
-                <p style="font-size: 12px; color: #666; margin: 0;"><strong>Signed by:</strong> ${builder?.ownerName} representing ${builder?.companyName}</p>
-                <p style="font-size: 12px; color: #666; margin: 0;"><strong>Date:</strong> ${agreement.dateSigned.toDate().toLocaleString()}</p>
-                <p style="font-size: 10px; color: #999; margin-top: 10px;">Audit ID: BRA-${agreement.id.substring(0,8).toUpperCase()}</p>
+                <div class="signature-block">
+                    <h3 style="margin-top: 0; font-size: 14px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;">Digital Execution Record</h3>
+                    <div style="background: white; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; display: inline-block;">
+                        <img src="${agreement.signatureData}" style="display: block; width: 400px; height: auto; min-height: 100px;" />
+                    </div>
+                <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <p style="font-size: 11px; color: #64748b; margin: 0;">Authorized Signatory</p>
+                        <p style="font-size: 13px; color: #0f172a; font-weight: bold; margin: 2px 0;">${builder?.ownerName}</p>
+                    </div>
+                    <div>
+                        <p style="font-size: 11px; color: #64748b; margin: 0;">Timestamp (UTC)</p>
+                        <p style="font-size: 13px; color: #0f172a; font-weight: bold; margin: 2px 0;">${agreement.dateSigned.toDate().toUTCString()}</p>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                    <p style="font-size: 9px; color: #94a3b8; line-height: 1.4; margin: 0;">
+                        This document was electronically signed in accordance with the Electronic Communications Act 2000. 
+                        The signature is cryptographically linked to this document and represents a binding legal commitment.
+                    </p>
+                </div>
             </div>
             ` : ''}
         `;
 
         const opt = {
-            margin:       1,
+            margin:       [0.5, 0.5, 0.5, 0.5],
             filename:     `Contract_${builder?.companyName.replace(/\s+/g, '_')}_${agreement.id.substring(0,6)}.pdf`,
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 },
-            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            html2canvas:  { 
+                scale: 2, 
+                useCORS: true, 
+                logging: false,
+                allowTaint: true
+            },
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+            pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
         };
 
         html2pdf().set(opt).from(element).save();
@@ -309,8 +348,7 @@ const Contracts = () => {
                                 <tr>
                                     <th className="px-6 py-4 font-medium">Builder</th>
                                     <th className="px-6 py-4 font-medium">Version Issued</th>
-                                    <th className="px-6 py-4 font-medium">Passcode</th>
-                                    <th className="px-6 py-4 font-medium">Status</th>
+                                    <th className="px-6 py-4 font-medium text-center">Circulation Status</th>
                                     <th className="px-6 py-4 font-medium text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -333,10 +371,7 @@ const Contracts = () => {
                                                 {getVersionTitle(agreement.versionId)}
                                                 <div className="text-[10px] text-gray-400 mt-0.5">Issued: {agreement.dateIssued ? new Date(agreement.dateIssued.toDate()).toLocaleDateString() : 'Just now'}</div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span className="font-mono bg-gray-100 px-2 py-1 rounded text-xs font-bold">{agreement.passcode}</span>
-                                            </td>
-                                            <td className="px-6 py-4">
+                                            <td className="px-6 py-4 text-center">
                                                 {agreement.status === 'Signed' ? (
                                                     <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border border-green-200 bg-green-50 text-green-700">
                                                         <CheckCircle2 className="h-3.5 w-3.5" /> Signed
@@ -347,9 +382,6 @@ const Contracts = () => {
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 text-gray-500 whitespace-nowrap">
-                                                {agreement.dateIssued ? new Date(agreement.dateIssued.toDate()).toLocaleDateString() : 'Just now'}
-                                            </td>
                                             <td className="px-6 py-4 text-right flex justify-end gap-2">
                                                 {agreement.status === 'Pending' ? (
                                                     <>
@@ -357,8 +389,8 @@ const Contracts = () => {
                                                             onClick={(e) => { 
                                                                 e.stopPropagation(); 
                                                                 const link = `${window.location.origin}${window.location.pathname}#/sign/${agreement.id}/${agreement.accessKey}`;
-                                                                navigator.clipboard.writeText(`Contract Link: ${link}\nYour Passcode: ${agreement.passcode}`);
-                                                                alert("Copy link and passcode to clipboard!");
+                                                                navigator.clipboard.writeText(`Contract Link: ${link}`);
+                                                                alert("Copy link to clipboard!");
                                                             }} 
                                                             className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                             title="Copy Signing Link"
@@ -403,24 +435,45 @@ const Contracts = () => {
             )}
 
             {activeTab === 'versions' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-auto pb-6">
-                    {versions.length === 0 ? (
-                        <div className="col-span-full py-12 text-center text-gray-500 text-sm bg-white rounded-xl border border-gray-200 border-dashed">
-                            No contract versions exist. Create your first contract boilerplate!
-                        </div>
-                    ) : (
-                        versions.map(version => (
-                            <div key={version.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col">
-                                <h3 className="text-lg font-bold text-[#0f172a] mb-2">{version.title}</h3>
-                                <p className="text-xs text-gray-400 mb-4 tracking-wide font-medium">CREATED: {version.createdAt ? new Date(version.createdAt.toDate()).toLocaleDateString() : 'Now'}</p>
-                                <div className="border border-gray-100 bg-gray-50 rounded-lg p-4 mb-4 flex-1 text-sm text-gray-700 line-clamp-[8] prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: version.content }}>
-                                </div>
-                                <div className="text-xs font-semibold text-gray-500">
-                                    {agreements.filter(a => a.versionId === version.id).length} Accompanying Agreements
-                                </div>
-                            </div>
-                        ))
-                    )}
+                <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col min-h-0 flex-1">
+                    <div className="overflow-auto flex-1">
+                        <table className="w-full text-left text-sm text-gray-600">
+                            <thead className="bg-gray-50 text-xs uppercase text-gray-500 sticky top-0 z-10 shadow-sm border-b border-gray-200">
+                                <tr>
+                                    <th className="px-6 py-4 font-medium">Template Title</th>
+                                    <th className="px-6 py-4 font-medium">Date Created</th>
+                                    <th className="px-6 py-4 font-medium text-center">Circulation</th>
+                                    <th className="px-6 py-4 font-medium text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 bg-white">
+                                {versions.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="4" className="px-6 py-8 text-center text-gray-500 text-sm">No contract versions exist.</td>
+                                    </tr>
+                                ) : (
+                                    versions.map(version => (
+                                        <tr key={version.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setViewingVersion(version)}>
+                                            <td className="px-6 py-4 font-medium text-[#0f172a]">{version.title}</td>
+                                            <td className="px-6 py-4 text-gray-500 whitespace-nowrap">
+                                                {version.createdAt ? new Date(version.createdAt.toDate()).toLocaleDateString() : 'N/A'}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-[10px] font-bold">
+                                                    {agreements.filter(a => a.versionId === version.id).length} ISSUED
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button onClick={(e) => { e.stopPropagation(); setViewingVersion(version); }} className="text-[#0284c7] hover:text-[#0369a1] font-semibold text-sm">
+                                                    View Details
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
@@ -440,9 +493,9 @@ const Contracts = () => {
                                     <X className="h-6 w-6" />
                                 </button>
                             </div>
-                            <div className="flex-1 overflow-y-auto p-8 relative">
+                            <div className="flex-1 overflow-y-auto p-4 md:p-8 relative">
                                 <div className="max-w-2xl mx-auto space-y-8">
-                                    <div className="prose prose-sm max-w-none p-8 bg-white border border-gray-200 rounded-xl shadow-sm text-gray-800" 
+                                    <div className="prose prose-sm max-w-none p-4 md:p-8 bg-white border border-gray-200 rounded-xl shadow-sm text-gray-800 overflow-x-hidden break-words" 
                                          dangerouslySetInnerHTML={{ __html: autofillContract(
                                              versions.find(v => v.id === signingAgreement.versionId)?.content,
                                              builders.find(b => b.id === signingAgreement.builderId)
@@ -504,9 +557,9 @@ const Contracts = () => {
                                     <X className="h-6 w-6" />
                                 </button>
                             </div>
-                            <div className="flex-1 overflow-y-auto p-8 relative">
+                            <div className="flex-1 overflow-y-auto p-4 md:p-8 relative">
                                 <div className="max-w-2xl mx-auto space-y-8">
-                                    <div className="prose prose-sm max-w-none p-8 bg-white border border-gray-200 rounded-xl shadow-sm text-gray-800" 
+                                    <div className="prose prose-sm max-w-none p-4 md:p-8 bg-white border border-gray-200 rounded-xl shadow-sm text-gray-800 overflow-x-hidden break-words" 
                                          dangerouslySetInnerHTML={{ __html: autofillContract(
                                              versions.find(v => v.id === viewingAgreement.versionId)?.content,
                                              builders.find(b => b.id === viewingAgreement.builderId),
@@ -678,6 +731,89 @@ const Contracts = () => {
                     </div>
                 </div>
             )}
+            {/* Slide-over: Version Details */}
+            <div className={`fixed inset-0 z-[70] bg-black/30 backdrop-blur-sm flex justify-end transition-opacity duration-300 ${viewingVersion ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                <div className={`w-full max-w-3xl bg-white h-full shadow-2xl flex flex-col transform transition-transform duration-500 ease-out ${viewingVersion ? 'translate-x-0' : 'translate-x-full'}`}>
+                    {viewingVersion && (
+                        <>
+                            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50 shrink-0">
+                                <div>
+                                    <h2 className="text-xl font-bold text-[#0f172a]">{viewingVersion.title}</h2>
+                                    <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest font-bold">Template Created: {viewingVersion.createdAt ? new Date(viewingVersion.createdAt.toDate()).toLocaleDateString() : 'N/A'}</p>
+                                </div>
+                                <button onClick={() => setViewingVersion(null)} className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-200 transition-colors">
+                                    <X className="h-6 w-6" />
+                                </button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto">
+                                <div className="p-4 md:p-8 space-y-12">
+                                    {/* Content Preview */}
+                                    <section>
+                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Template Body Preview</h3>
+                                        <div className="prose prose-sm max-w-none p-4 md:p-8 bg-gray-50 border border-gray-100 rounded-2xl text-gray-800 break-words overflow-x-hidden" 
+                                             dangerouslySetInnerHTML={{ __html: viewingVersion.content }}>
+                                        </div>
+                                    </section>
+
+                                    {/* Circulation Stats */}
+                                    <section className="space-y-6">
+                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Builder Signatories</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                                            {/* Executed */}
+                                            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                                <div className="flex items-center gap-2 text-green-600 mb-4">
+                                                    <CheckCircle2 className="h-4 w-4" />
+                                                    <span className="text-xs font-bold uppercase tracking-wider">Signed & Executed</span>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {agreements.filter(a => a.versionId === viewingVersion.id && a.status === 'Signed').length === 0 ? (
+                                                        <p className="text-xs text-gray-400 py-4 text-center">No signed contracts yet.</p>
+                                                    ) : (
+                                                        agreements.filter(a => a.versionId === viewingVersion.id && a.status === 'Signed').map(a => (
+                                                            <div key={a.id} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                                                                <div>
+                                                                    <p className="text-sm font-bold text-gray-900">{getBuilderName(a.builderId)}</p>
+                                                                    <p className="text-[10px] text-gray-500">Signed: {a.dateSigned ? new Date(a.dateSigned.toDate()).toLocaleDateString() : ''}</p>
+                                                                </div>
+                                                                <button onClick={() => setViewingAgreement(a)} className="text-blue-600 hover:underline text-[10px] font-bold px-2 py-1 bg-blue-50 rounded">VIEW</button>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Pending */}
+                                            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                                <div className="flex items-center gap-2 text-amber-600 mb-4">
+                                                    <AlertCircle className="h-4 w-4" />
+                                                    <span className="text-xs font-bold uppercase tracking-wider">Pending Signature</span>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {agreements.filter(a => a.versionId === viewingVersion.id && a.status === 'Pending').length === 0 ? (
+                                                        <p className="text-xs text-gray-400 py-4 text-center">No pending contracts.</p>
+                                                    ) : (
+                                                        agreements.filter(a => a.versionId === viewingVersion.id && a.status === 'Pending').map(a => (
+                                                            <div key={a.id} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                                                                <div>
+                                                                    <p className="text-sm font-bold text-gray-900">{getBuilderName(a.builderId)}</p>
+                                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                                        <span className="text-[9px] text-gray-400">ISSUED: {a.dateIssued ? new Date(a.dateIssued.toDate()).toLocaleDateString() : 'N/A'}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <button onClick={() => openAgreement(a.id)} className="text-blue-600 hover:underline text-[10px] font-bold px-2 py-1 bg-blue-50 rounded">OPEN</button>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };

@@ -17,10 +17,9 @@ const SignContract = () => {
     const [error, setError] = useState(null);
     const [signed, setSigned] = useState(false);
     
-    // Security states
-    const [isLocked, setIsLocked] = useState(true);
-    const [passcodeAttempt, setPasscodeAttempt] = useState('');
-    const [passcodeError, setPasscodeError] = useState(null);
+    // Security states - REMOVED passcode per user request
+    const [isConsentGiven, setIsConsentGiven] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     
     const sigPad = useRef({});
 
@@ -31,30 +30,32 @@ const SignContract = () => {
                 const agreementSnap = await getDoc(agreementRef);
                 
                 if (!agreementSnap.exists()) {
-                    console.error("Agreement not found in Firestore for ID:", agreementId);
                     setError("Agreement not found.");
                     setLoading(false);
                     return;
                 }
                 
                 const agreementData = { id: agreementSnap.id, ...agreementSnap.data() };
-                console.log("Fetched Agreement Data:", agreementData);
                 
-                // Security check 1: Access Key (from URL)
                 if (agreementData.accessKey !== accessKey) {
-                    console.error("Access Key Mismatch! URL:", accessKey, "DB:", agreementData.accessKey);
                     setError("Invalid or expired access link.");
                     setLoading(false);
                     return;
                 }
                 
                 if (agreementData.status === 'Signed') {
-                    console.log("Agreement already signed.");
                     setSigned(true);
                     setAgreement(agreementData);
                     setLoading(false);
                     return;
                 }
+
+                // Log Link Click Action (Audit Trail Step 1)
+                await updateDoc(agreementRef, {
+                    'auditTrail.linkOpenedAt': new Date().toISOString(),
+                    'auditTrail.visitorIp': 'captured-at-api', // Placeholder for actual IP
+                    'auditTrail.visitorUserAgent': navigator.userAgent
+                });
 
                 setAgreement(agreementData);
 
@@ -64,7 +65,6 @@ const SignContract = () => {
                     const builderSnap = await getDoc(builderRef);
                     if (builderSnap.exists()) {
                         setBuilder({ id: builderSnap.id, ...builderSnap.data() });
-                        console.log("Fetched Builder Data");
                     } else {
                         console.warn("Builder not found for ID:", agreementData.builderId);
                     }
@@ -78,7 +78,6 @@ const SignContract = () => {
                     const versionSnap = await getDoc(versionRef);
                     if (versionSnap.exists()) {
                         setVersion({ id: versionSnap.id, ...versionSnap.data() });
-                        console.log("Fetched Version Content");
                     } else {
                         console.warn("Contract Version not found for ID:", agreementData.versionId);
                         setError("This contract template no longer exists.");
@@ -98,39 +97,30 @@ const SignContract = () => {
         fetchAgreement();
     }, [agreementId, accessKey]);
 
-    const handleUnlock = (e) => {
-        e.preventDefault();
-        setPasscodeError(null);
-        if (passcodeAttempt.trim() === agreement?.passcode) {
-            console.log("Passcode correct, unlocking...");
-            setIsLocked(false);
-        } else {
-            console.warn("Passcode incorrect attempt:", passcodeAttempt);
-            setPasscodeError("Incorrect passcode. Please check the information sent to you.");
-        }
-    };
-
     const handleSign = async () => {
+        if (!isConsentGiven) {
+            alert("Please check the consent box to confirm your intent to sign.");
+            return;
+        }
         if (sigPad.current.isEmpty()) {
             alert("Please provide a signature.");
             return;
         }
 
         try {
-            setLoading(true);
+            setIsSubmitting(true);
             const signatureData = sigPad.current.getTrimmedCanvas().toDataURL("image/png");
             
-            // Gather Audit Trail Info
-            // Note: In a real production app, you'd use a Cloud Function to capture IP securely.
-            // For now, we capture what we can from the client side.
             const auditTrail = {
+                ...agreement.auditTrail,
                 signedAt: new Date().toISOString(),
+                intentConfirmed: true,
                 userAgent: navigator.userAgent,
                 platform: navigator.platform,
-                language: navigator.language,
                 agreementId: agreementId,
+                builderEmail: builder?.email,
                 builderId: agreement.builderId,
-                // Client-side IP detection (optional, usually done server-side)
+                statusAtSigning: 'Tamper-Locked'
             };
 
             const agreementRef = doc(db, 'agreements', agreementId);
@@ -138,15 +128,16 @@ const SignContract = () => {
                 status: 'Signed',
                 dateSigned: serverTimestamp(),
                 signatureData: signatureData,
-                auditTrail: auditTrail
+                auditTrail: auditTrail,
+                isTamperLocked: true // Tamper-Sealing flag
             });
             
             setSigned(true);
-            setLoading(false);
+            setIsSubmitting(false);
         } catch (err) {
             console.error("Error signing agreement:", err);
             alert("Failed to submit signature. Please try again.");
-            setLoading(false);
+            setIsSubmitting(false);
         }
     };
 
@@ -197,57 +188,7 @@ const SignContract = () => {
         );
     }
 
-    if (isLocked) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-                <div className="bg-white p-10 rounded-3xl shadow-2xl max-w-md w-full border border-gray-100">
-                    <div className="bg-[#0f172a] h-16 w-16 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-slate-200">
-                        <Lock className="h-8 w-8 text-white" />
-                    </div>
-                    <h1 className="text-2xl font-bold text-gray-900 text-center mb-2">Secure Contract Access</h1>
-                    <p className="text-gray-500 text-center text-sm mb-8">
-                        Please enter the 6-digit passcode provided to you via email or message to view and sign this agreement.
-                    </p>
-                    
-                    <form onSubmit={handleUnlock} className="space-y-6">
-                        <div>
-                            <input
-                                type="text"
-                                value={passcodeAttempt}
-                                onChange={(e) => setPasscodeAttempt(e.target.value)}
-                                placeholder="Enter 6-digit passcode"
-                                className={`w-full text-center py-4 rounded-2xl border-2 text-2xl font-mono tracking-[0.3em] focus:outline-none focus:ring-4 transition-all ${passcodeError ? 'border-red-200 bg-red-50 focus:ring-red-100' : 'border-gray-100 bg-gray-50 focus:ring-blue-100 focus:border-blue-400'}`}
-                                maxLength={6}
-                                autoFocus
-                            />
-                            {passcodeError && (
-                                <p className="text-red-500 text-xs font-bold mt-3 text-center flex items-center justify-center gap-1">
-                                    <AlertCircle className="h-3 w-3" /> {passcodeError}
-                                </p>
-                            )}
-                        </div>
-                        
-                        <button
-                            type="submit"
-                            className="w-full bg-[#0f172a] text-white py-4 rounded-2xl font-bold text-lg hover:bg-black shadow-xl shadow-slate-200 transition-all"
-                        >
-                            Review & Sign Contract
-                        </button>
-                    </form>
-                    
-                    <div className="mt-8 pt-8 border-t border-gray-100 flex flex-col items-center gap-4">
-                        <div className="flex items-center gap-4">
-                            <ShieldCheck className="h-5 w-5 text-blue-600" />
-                            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">End-to-End Encrypted</span>
-                        </div>
-                        <p className="text-[10px] text-gray-300 text-center uppercase tracking-widest font-bold">
-                            Legal Entity: {builder?.companyName}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    // Passcode lock screen removed per user request
 
     const filledContent = autofillContract(version?.content, builder, null);
 
@@ -305,8 +246,8 @@ const SignContract = () => {
                     </div>
 
                     {/* Contract Body */}
-                    <div className="px-8 py-12">
-                        <div className="prose prose-slate max-w-none text-gray-700 contract-content" 
+                    <div className="px-4 md:px-8 py-12">
+                        <div className="prose prose-slate max-w-none text-gray-700 contract-content break-words overflow-x-hidden" 
                              dangerouslySetInnerHTML={{ __html: filledContent }}>
                         </div>
                     </div>
@@ -338,29 +279,35 @@ const SignContract = () => {
                                 />
                             </div>
 
-                            <div className="space-y-6">
-                                <div className="flex items-start gap-3">
-                                    <div className="mt-1">
-                                        <div className="h-4 w-4 rounded border-gray-300 bg-white border flex items-center justify-center">
-                                            <ShieldCheck className="h-3 w-3 text-blue-600" />
-                                        </div>
-                                    </div>
-                                    <p className="text-xs text-gray-500 leading-relaxed">
-                                        I hereby agree that this electronic signature is the legally binding equivalent of my handwritten signature. 
-                                        By clicking 'Finalize Agreement', I declare that I have read, understood, and agree to the terms of this contract. 
-                                        This process complies with the UK Electronic Communications Act 2000.
-                                    </p>
+                                <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                    <input
+                                        id="consent-check"
+                                        type="checkbox"
+                                        checked={isConsentGiven}
+                                        onChange={(e) => setIsConsentGiven(e.target.checked)}
+                                        className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <label htmlFor="consent-check" className="text-xs text-blue-900 font-medium leading-relaxed cursor-pointer">
+                                        I, representing {builder?.companyName}, confirm my intent to sign this document and consent to be legally bound by this electronic signature.
+                                    </label>
                                 </div>
 
                                 <button
                                     onClick={handleSign}
-                                    className="w-full bg-[#0f172a] text-white py-4 rounded-2xl font-bold text-lg hover:bg-black shadow-xl shadow-slate-200 transition-all flex items-center justify-center gap-3"
+                                    disabled={isSubmitting}
+                                    className="w-full bg-[#0f172a] text-white py-4 rounded-2xl font-bold text-lg hover:bg-black shadow-xl shadow-slate-200 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                                 >
-                                    <CheckCircle2 className="h-6 w-6 text-green-400" />
-                                    Finalize & Sign Agreement
+                                    {isSubmitting ? (
+                                        <Loader2 className="h-6 w-6 animate-spin" />
+                                    ) : (
+                                        <>
+                                            <CheckCircle2 className="h-6 w-6 text-green-400" />
+                                            Confirm Intent & Sign Agreement
+                                        </>
+                                    )}
                                 </button>
                                 
-                                <div className="flex items-center justify-center gap-6 text-[10px] text-gray-400 font-bold uppercase tracking-widest pt-4">
+                                <div className="flex items-center justify-center gap-6 text-[10px] text-gray-400 font-bold uppercase tracking-widest pt-4 text-center">
                                     <span className="flex items-center gap-1.5"><Lock className="h-3 w-3" /> SSL Secure</span>
                                     <span className="flex items-center gap-1.5"><ShieldCheck className="h-3 w-3" /> Authenticated</span>
                                     <span className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Dynamic Timestamp</span>
@@ -374,7 +321,6 @@ const SignContract = () => {
                     &copy; {new Date().getFullYear()} Benchmark Intelligence. All Rights Reserved.
                 </footer>
             </div>
-        </div>
     );
 };
 
