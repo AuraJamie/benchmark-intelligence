@@ -321,6 +321,7 @@ const SignContract = () => {
                     &copy; {new Date().getFullYear()} Benchmark Intelligence. All Rights Reserved.
                 </footer>
             </div>
+        </div>
     );
 };
 
