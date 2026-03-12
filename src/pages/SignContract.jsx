@@ -9,18 +9,18 @@ import { autofillContract } from '../utils/contractUtils';
 const SignContract = () => {
     const { agreementId, accessKey } = useParams();
     const navigate = useNavigate();
-    
+
     const [loading, setLoading] = useState(true);
     const [agreement, setAgreement] = useState(null);
     const [builder, setBuilder] = useState(null);
     const [version, setVersion] = useState(null);
     const [error, setError] = useState(null);
     const [signed, setSigned] = useState(false);
-    
+
     // Security states - REMOVED passcode per user request
     const [isConsentGiven, setIsConsentGiven] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
+
     const sigPad = useRef({});
 
     useEffect(() => {
@@ -28,21 +28,21 @@ const SignContract = () => {
             try {
                 const agreementRef = doc(db, 'agreements', agreementId);
                 const agreementSnap = await getDoc(agreementRef);
-                
+
                 if (!agreementSnap.exists()) {
                     setError("Agreement not found.");
                     setLoading(false);
                     return;
                 }
-                
+
                 const agreementData = { id: agreementSnap.id, ...agreementSnap.data() };
-                
+
                 if (agreementData.accessKey !== accessKey) {
                     setError("Invalid or expired access link.");
                     setLoading(false);
                     return;
                 }
-                
+
                 if (agreementData.status === 'Signed') {
                     setSigned(true);
                     setAgreement(agreementData);
@@ -110,7 +110,7 @@ const SignContract = () => {
         try {
             setIsSubmitting(true);
             const signatureData = sigPad.current.getTrimmedCanvas().toDataURL("image/png");
-            
+
             // Call Cloud Function for Finalization
             const response = await fetch('https://europe-west2-benchmark-intelligence-a5b7c.cloudfunctions.net/signContract', {
                 method: 'POST',
@@ -128,7 +128,7 @@ const SignContract = () => {
 
             const result = await response.json();
             console.log("Contract finalized successfully:", result);
-            
+
             setSigned(true);
             setIsSubmitting(false);
         } catch (err) {
@@ -169,7 +169,7 @@ const SignContract = () => {
                     <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle2 className="h-12 w-12 text-green-600" />
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-3">Contract Executed</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-3">Contract Signed</h1>
                     <p className="text-gray-600 mb-4">
                         Thank you! Your signature has been securely recorded and the document is now finalized.
                     </p>
@@ -253,8 +253,9 @@ const SignContract = () => {
                             htmlFor="consent-check"
                             className="text-xs text-blue-900 leading-relaxed cursor-pointer"
                         >
-                            I, representing {builder?.companyName}, confirm my intent to sign this document and consent
-                            to be legally bound by this electronic signature.
+                            By clicking 'Confirm intent & sign agreement', I acknowledge that I have read the terms
+                            above and consent to use electronic records and signatures in place of paper documents.
+                            I understand that my electronic signature is as legally binding as a handwritten one.
                         </label>
                     </div>
 

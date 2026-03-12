@@ -27,9 +27,9 @@ service cloud.firestore {
     }
 
     match /signedContracts/{contractId} {
-      allow read: if request.auth != null;
-      allow create: if true; // Technically created by Cloud Function via admin SDK, but doesn't hurt to be explicit about backend intent
-      allow update, delete: if false; // Immutable audit records
+      allow read, delete: if request.auth != null;
+      allow create: if true; 
+      allow update: if false; // Immutable audit records
     }
 
     match /builders/{builderId} {
