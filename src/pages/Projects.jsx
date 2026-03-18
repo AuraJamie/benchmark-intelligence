@@ -71,7 +71,7 @@ const Projects = () => {
     const [selectedBuilderToAssign, setSelectedBuilderToAssign] = useState('');
 
     const [sortBy, setSortBy] = useState('dateDecidedDesc');
-    const STATUS_OPTIONS = ['New', 'Pack Required', 'Pack Created', 'Pack Sent', 'Quoted', 'Won', 'Paid', 'Archive'];
+    const STATUS_OPTIONS = ['New', 'Pack Required', 'Pack Created', 'Pack Sent', 'Quoted', 'Won', 'Paid', 'Revisit', 'Archive'];
     const [filterStatus, setFilterStatus] = useState('All');
     const [showArchive, setShowArchive] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
